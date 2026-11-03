@@ -1,35 +1,41 @@
-# SatGeoTracker v0.8.8 — acceptance checklist
+# SatGeoTracker v0.8.8 — чек-лист приёмки
 
-Use a fresh folder and run `setup.cmd`, then `dev.cmd`. Do not copy old
-`frontend/node_modules` from v0.8.7 into the new release.
+Это историческая проверка версии v0.8.8, а не текущие требования к v0.9.1.
 
-## Visual tests (browser)
+Используйте отдельную папку, запустите `setup.cmd` и затем `dev.cmd`. Не переносите старые `frontend/node_modules` из v0.8.7.
 
-1. Search ISS (NORAD 25544), focus on its 3D model. The grey detached sphere
-   cluster from v0.8.7 must be gone. The station itself must remain detailed.
-   Reload the page and repeat to confirm the previous shared GLB cache was fixed.
-2. At 1920x1080 select ISS: `ЗЕМЛЯ` and close button must be equal height,
-   aligned on one horizontal row, without obscuring the header/target name.
-3. Switch to `ПРОЛЁТЫ` with an observer configured. The inspector should stop
-   above the pass drawer. Expand and collapse the pass drawer; the inspector
-   bottom boundary must move with it. Content below the boundary scrolls inside.
-4. Select different satellites on bright imagery/ocean/night sky. All normal
-   markers must remain visible as amber dots with dark borders.
-5. Find ISS and CSS/Tiangong (NORAD 48274). Verify the distinct magenta station
-   pictogram is visible and clickable, and the inspector shows `СТАНЦИЯ`.
-   On close-up ISS the icon disappears when the detailed 3D model takes over.
-6. Test 1366x768, 1920x1080 and a narrow viewport. Open/close controls,
-   camera tracking and changing modes should still work.
+## Визуальные проверки в браузере
 
-## Automated tests
+1. Найдите МКС (`NORAD 25544`) и приблизьтесь к её 3D-модели. Отдельный серый кластер из v0.8.7 должен исчезнуть, а детали станции сохраниться. Перезагрузите страницу для проверки старого GLB-кеша.
+2. При **1920×1080** выберите МКС: кнопки **ЗЕМЛЯ** и закрытия должны иметь одинаковую высоту, находиться в одной строке и не перекрывать заголовок.
+3. Перейдите в **ПРОЛЁТЫ** с настроенным наблюдателем. Инспектор справа должен заканчиваться над нижней лентой. При раскрытии/сворачивании ленты нижняя граница панели перемещается, а скрытое содержимое прокручивается внутри инспектора.
+4. Выберите несколько спутников на фоне яркой Земли, океана и ночного неба. Обычные маркеры должны оставаться заметными янтарными точками с тёмным контуром.
+5. Найдите МКС и CSS/Tiangong (`NORAD 48274`). Проверьте отдельный пурпурный значок станции, возможность выбора и метку **СТАНЦИЯ** в инспекторе. При близком приближении к МКС значок скрывается, уступая место детализированной 3D-модели.
+6. Проверьте **1366×768**, **1920×1080** и узкое окно: открытие/закрытие панелей, слежение камерой, переключение режимов.
 
-Frontend (after setup): `cd frontend && npm run test:orbits && npm run test:markers`
+## Автоматические проверки
 
-Backend (no database required): `python -m unittest discover -s backend/tests -v`
+Frontend после установки:
 
-Build: `cd frontend && npm run build` (requires platform-specific dependencies)
+```powershell
+cd frontend
+npm run test:orbits
+npm run test:markers
+```
 
-## Non-goals
+Backend без базы данных:
 
-No change to SGP4 orbit propagation, camera controller, AOS/TCA/LOS prediction,
-SatNOGS SDR, or user accounts/database. Favorites are planned for v0.9.0.
+```powershell
+python -m unittest discover -s backend/tests -v
+```
+
+Production-сборка (необходимы платформенные зависимости):
+
+```powershell
+cd frontend
+npm run build
+```
+
+## Что в v0.8.8 не изменялось
+
+Распространение орбит по SGP4, контроллер камеры, прогнозы AOS/TCA/LOS, SDR SatNOGS, учётные записи и база данных. Избранное было запланировано только на v0.9.0 и позднее действительно реализовано.
