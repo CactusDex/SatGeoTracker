@@ -365,7 +365,8 @@ export default function App() {
         color: Color.fromCssColorString("#74f2b5"),
         outlineColor: Color.fromCssColorString("#06100c"),
         outlineWidth: 2,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        // Keep the observer hidden when Earth occludes it.
+        disableDepthTestDistance: 0,
       },
     });
   }, [observerSystem.observer]);
@@ -657,7 +658,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand" aria-label="SatGeoTracker">
           <span className="brand-name">SatGeoTracker</span>
-          <span className="brand-version">v0.8.5</span>
+          <span className="brand-version">v0.8.6</span>
         </div>
 
         <nav className="mode-switch" aria-label="Режим работы">
@@ -768,7 +769,6 @@ export default function App() {
                     className={orbitFilter === filter ? "active" : ""}
                     onClick={() => {
                       setOrbitFilter(filter);
-                      setToolsOpen(false);
                     }}
                   >
                     {orbitFilterLabel(filter)}
