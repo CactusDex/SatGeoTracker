@@ -1,158 +1,149 @@
-# Changelog
+# История изменений SatGeoTracker
 
-## v0.9.1 — Universal Satellite Hover (accepted)
+## v0.9.1 — Универсальная карточка наведения (принята)
 
-- Единая карточка наведения в КАРТА / SDR / ПРОЛЁТЫ с названием, NORAD ID, орбитальным классом, высотой и скоростью.
-- Дополнительные данные: угол места при заданном наблюдателе, параметры радиоканала в SDR и ближайший прогноз в ПРОЛЁТЫ.
-- Наведение не захватывает выбор спутника и не меняет камеру; обычное нажатие сохраняется.
-- Перенесены исправления v0.9.0 RC2: ранжирование поиска по NORAD/названию и одинаковые размеры мобильных карточек SDR/ПРОЛЁТЫ.
-- Сохранены Favorites, Graphite Glass, логотип и фавикон из v0.9.0.
-- Принято пользователем после браузерной проверки. Production-сборку на Windows и независимую проверку SGP4 на свежих OMM следует подтвердить отдельно.
+- Карточка наведения во всех трёх режимах: **КАРТА / SDR / ПРОЛЁТЫ**. Показывает название, NORAD ID, класс орбиты, высоту и скорость.
+- Дополнительные сведения: угол места при заданном наблюдателе, параметры радиоканала в SDR, ближайший прогноз в ПРОЛЁТАХ.
+- Наведение не выбирает спутник и не переключает камеру; обычное нажатие на объект сохранено.
+- Включены исправления v0.9.0 RC2: релевантность поиска по NORAD/названию и одинаковые размеры мобильных карточек SDR/ПРОЛЁТЫ.
+- Сохранены избранное, Graphite Glass, логотип и фавикон из v0.9.0.
+- Принято пользователем после браузерной проверки. Успешная production-сборка на Windows и независимая сверка SGP4 на свежих OMM **не подтверждены**.
 
-## v0.9.0 — Favorites & Identity (functionally accepted)
+## v0.9.0 — Избранное и фирменный стиль (функционально принята)
 
-- Local NORAD-based favorites with cached names, searchable list and quick focus.
-- Preserve unavailable favorites and tolerate restricted browser storage.
-- Graphite Glass translucent inspector with internal scrolling.
-- Full-width pass drawer below the inspector; eliminate bottom-right gap.
-- Add approved orbit/globe branding: header mark and SVG/PNG/ICO favicons.
-- Preserve Cesium static runtime and all v0.8.8 orbital/camera/SDR logic.
-- Browser regression and Windows production build remain to be confirmed.
+- Локальное избранное спутников по NORAD ID с сохранением названий, поиском и быстрым переходом.
+- Недоступные записи остаются в списке; предусмотрена обработка ограничений браузерного хранилища.
+- Полупрозрачный Graphite Glass-инспектор с внутренней прокруткой.
+- Полноширинная нижняя лента пролётов: устранена пустая область справа под инспектором.
+- Утверждённая символика Земли и орбитального кольца: логотип в шапке и фавиконы SVG/PNG/ICO.
+- Сохранены ресурсы Cesium и логика орбит, камеры и SDR из v0.8.8.
+- Повторная production-сборка на Windows оставлена для отдельной проверки.
 
+## v0.8.8 — Визуальные исправления (принята)
 
-## v0.8.8 — Visual Polish (accepted)
+- Удалены ссылки на посторонние конструкционные меши в оригинальной NASA ISS B GLB-сцене.
+- Исправлен старый кеш GLB; версия URL исключает повторное использование некорректного браузерного кеша.
+- Выровнены кнопки инспектора; высота панели ограничена положением ленты пролётов.
+- Янтарные точки спутников, отдельные контрастные значки станций и метка «СТАНЦИЯ».
+- Алгоритмы SGP4, камеры, прогнозов и SDR не изменялись.
 
-- Remove detached construction meshes from the original NASA ISS B glTF scene.
-- Sanitize previously cached GLB and bust client immutable URL cache.
-- Align inspector top-line buttons; constrain inspector to the pass drawer.
-- Amber satellite points, contrasting station icons and a station badge.
-- No SGP4, camera, pass prediction or SDR algorithm changes.
-- Validate model appearance and responsive layout in browser before release.
+## v0.8.7 — Исправление ресурсов Cesium Workers
 
-## v0.8.7 — Cesium Worker hotfix
+- В полный архив включены статические ресурсы Cesium, чтобы Worker-файлы были доступны сразу.
+- Перед запуском Vite выполняется проверка и синхронизация ресурсов Cesium при изменении npm-зависимостей.
+- Установка прерывается при ошибках npm/pip; перед запуском проверяется критически важный Worker.
+- Орбитальные расчёты, 3D-камера, FastAPI и UI не менялись.
 
-- Bundle Cesium static assets so a fresh ZIP has the workers immediately.
-- Automatically validate and refresh Cesium runtime assets when npm dependencies change, before starting Vite.
-- Fail setup on npm / pip install errors, and check the concrete Worker file before starting.
-- No changes to orbital math, 3D camera, FastAPI, or UI rendering logic.
+## v0.8.7 — Исправление геометрии орбит (исторический кандидат)
 
+- Геометрия линий GEO/MEO/LEO исправлена: для всех вычисленных TEME-точек применяется **единый GMST опорного момента**, а не разный GMST каждой точки.
+- Пространственные линии отображаются без привязки к поверхности через `ArcType.NONE`.
+- Орбитальная линия обновляется каждые 30 секунд, чтобы согласовывать ориентацию с вращением Земли и текущим маркером.
+- Добавлены тесты геометрии и уточнения пролётов, пример реального WGS F9, необязательные инструменты сравнения JS и Python SGP4.
+- CameraManager, физика SGP4, алгоритм пролётов, SDR и FastAPI оставлены без изменений.
+- Независимая численная сверка остаётся отдельной задачей.
 
-## v0.8.7 — Orbital Accuracy (candidate)
+## v0.8.6 — Стабильность и интерфейс (исторический кандидат)
 
-- Fix GEO / MEO / LEO orbit line by converting propagated TEME samples with a **single reference GMST**, instead of a time-varying GMST per sample.
-- Render world-space 3D orbit segments with `ArcType.NONE`.
-- Refresh the orbit polyline every 30 seconds so the inertial-plane orientation does not drift relative to moving Earth and selected marker.
-- Add geometry/pass-refinement regression tests and a real WGS F9 satellite.js fixture; add optional independent JS / Python SGP4 + pass audits.
-- Leave CameraManager, SGP4 physics, pass prediction model, SDR and FastAPI intact.
-- Browser and independent SGP4 numeric audits remain required before publishing a stable release.
+- Меню инструментов больше не закрывается при переключении фильтров ВСЕ/LEO/MEO/GEO.
+- Маркер наземного наблюдателя корректно скрывается за Землёй за счёт проверки глубины.
+- Улучшена читаемость телеметрии, подписей, карточек пролётов и элементов управления.
+- Исправлена адаптивность шапки и компактной ленты.
+- CameraManager, SGP4, прогнозы и FastAPI не менялись.
 
-## v0.8.6 — Stability & UX (candidate)
+## v0.8.5 — Динамический FOV камеры
 
-- Keep the TOOLS popover open when switching ALL / LEO / MEO / GEO filters.
-- Restore globe depth testing for the observer marker so it cannot appear through Earth.
-- Raise the legibility of small telemetry, labels, pass cards and interactive controls.
-- Reflow the narrow-screen header and improve compact pass-card sizing.
-- Leave CameraManager, SGP4, pass prediction and FastAPI unchanged.
-- Browser regression and production build validation are required before release.
+- Плавное управление углом обзора перспективной камеры в диапазоне **25°–110°** через `Ctrl + колесо`.
+- FOV работает при обзоре Земли и слежении за спутником, не меняя действия обычного колеса.
+- `Ctrl + 0` сбрасывает угол к **60°**.
+- Временный индикатор `FOV xx°` показывает текущий угол обзора.
+- Событие колеса с Ctrl перехватывается до обработчиков обычного масштабирования Cesium.
+- Используется обычная перспективная проекция, без fisheye-шейдера; точность выбора объектов сохраняется.
+- Базовая камера обновлена до v0.4.2; остальная орбитальная, визуальная и SDR-логика не менялась.
 
+## v0.8.4 — Русификация интерфейса
 
-## v0.8.5 — Dynamic Camera FOV
+- Пользовательские надписи переведены на русский; технические сокращения и обозначения оставлены.
+- Переведены навигация КАРТА/ПРОЛЁТЫ, строка поиска, инструменты, панель, контекст слежения, сообщения загрузки и ошибок.
+- Локализованы управление наблюдателем, сообщения геолокации, прогнозы, карточки и нижняя лента.
+- Переведены фильтры SDR без изменения диапазонов, NORAD, UTC, RX, SGP4/OMM и сырых данных внешних служб.
+- Направления света/сторон света представлены русскими сокращениями.
+- Физика камеры, Земли, SGP4 и Backend не менялась.
+- Логотип и фавикон тогда ещё не входили в релиз.
 
-- Added smooth perspective FOV control from `25°` to `110°` with `Ctrl + Wheel`.
-- FOV control works in both Earth navigation and satellite tracking without changing the existing normal-wheel behavior.
-- Added `Ctrl + 0` reset to the default `60°` lens.
-- Added a compact auto-hiding `FOV xx°` HUD for immediate feedback.
-- Intercepted modified wheel input before Cesium/browser zoom so FOV adjustment is exclusive and deterministic.
-- Kept the projection perspective-only; no post-process fisheye distortion was introduced, preserving Cesium picking accuracy.
-- Camera baseline advanced to v0.4.2; SGP4, Earth/ISS 3D, Observer/Pass Engine, and SDR backend remain unchanged.
+## v0.8.3 — Компоновка рабочего пространства
 
-## v0.8.4 — Russian UI Adaptation
+- Интерфейс перестроен вокруг 3D-карты: меньше постоянно открытых панелей.
+- **ИНСТРУМЕНТЫ** стали компактным временным меню; из него удалены лишние статистические карточки.
+- Правая панель стала прикреплённым к краю инспектором объекта или рабочего пространства.
+- Нижняя лента пролётов получила свёрнутое и раскрытое состояния.
+- В свёрнутых карточках остаются только оперативные сведения; раскрытая лента показывает подробные строки.
+- Крупные метрики заменены компактной телеметрией высоты, скорости, угла места, азимута и дальности.
+- Второстепенные характеристики перенесены в раскрываемый раздел **ТЕХНИЧЕСКИЕ ДАННЫЕ**.
+- Выбор спутника автоматически закрывает временное меню инструментов.
+- Расчёты орбит, камера, Земля/МКС, пролёты и SDR сохранены без изменений.
 
-- Adapted the user-facing shell and workflow copy to Russian while preserving technical acronyms and radio/orbital terminology where appropriate.
-- Localized MAP/PASSES navigation labels, search placeholders, tools/panel controls, workspace summaries, tracking context, loading/error states, and technical metadata labels.
-- Localized Observer controls, geolocation feedback, pass prediction messages, pass cards, and pass-drawer actions.
-- Localized SDR filter/radio UI while preserving band names, NORAD, UTC, RX, SGP4/OMM, and raw external service metadata.
-- Switched cardinal direction display to Russian abbreviations.
-- No functional changes to Camera, propagation, Earth/ISS 3D, pass calculations, or SDR backend.
-- Logo/favicon remain intentionally deferred.
+## v0.8.2 — Реальная логика рабочих режимов
 
-## v0.8.3 — Workspace Layout Cleanup
+- **КАРТА**, **SDR** и **ПРОЛЁТЫ** получили отдельную логику фильтрации карты и поиска.
+- КАРТА отображает весь набор объектов с учётом фильтра орбиты.
+- SDR ограничивает карту и поиск спутниками с подходящими радиоканалами; при наличии наблюдателя отображает доступные радиопролёты.
+- ПРОЛЁТЫ ограничивают карту и поиск объектами с рассчитанными событиями в текущем горизонте.
+- Орбитальные фильтры дополнительно влияют на вывод нижних карточек без изменения прогноза.
+- Кнопка **ПАНЕЛЬ** открывает рабочий контекст даже без выбранного спутника.
+- Содержимое инспектора и инструменты зависят от текущего режима.
+- Исправлены устаревшие фильтры при отмене слежения после смены режима.
+- Камера, SGP4, Земля/МКС, прогнозы и SDR-Backend не менялись.
 
-- Reworked the shell around a map-first layout with fewer simultaneous floating surfaces.
-- Converted `TOOLS` into a compact temporary popover and removed catalog/visible/source statistic cards from it.
-- Converted the right object/workspace panel into a docked inspector attached to the application edge.
-- Rebuilt the pass strip as a compact bottom drawer with collapsed and expanded states.
-- Collapsed pass cards now expose only actionable summary data; expanded mode provides detailed multi-row browsing.
-- Replaced oversized metric cards with dense telemetry readouts for altitude, velocity, elevation, azimuth, and range.
-- Moved low-frequency object metadata into an expandable `TECHNICAL DATA` section.
-- Selecting a target now dismisses the transient tools popover automatically.
-- Preserved Camera, SGP4/orbit core, Earth/ISS 3D, Observer/Pass Engine, and SDR backend behavior.
-- Logo/favicon remain intentionally deferred.
+## v0.8.1 — Новый интерфейс и структура режимов
 
-## v0.8.2 — Mode Wiring + Working Controls
+- Создана графитовая верхняя панель без градиентов.
+- Добавлены рабочие разделы **КАРТА**, **SDR** и **ПРОЛЁТЫ**.
+- Меню **ИНСТРУМЕНТЫ** управляет орбитами, наблюдателем и SDR-фильтрами.
+- Переключатель **ПАНЕЛЬ** позволяет скрыть сведения, не отменяя слежение.
+- Кнопка **ЗЕМЛЯ** в инспекторе освобождает камеру.
+- Поиск в шапке укорочен и стандартизирован.
+- Убраны постоянные нижние/левые статистические панели.
+- Унифицированы отступы, размеры, радиусы, границы и типографика.
+- Удалены градиенты оболочки.
+- Орбитальные расчёты, камера и Backend сохранены. Фирменная символика на этом этапе была отложена.
 
-- Wired `MAP`, `SDR`, and `PASSES` to distinct map/search behavior instead of shell-only tabs.
-- `MAP` keeps the full orbital workspace under the active orbit filter.
-- `SDR` limits map/search to satellites matching active radio filters and shows receivable pass cards when an observer is available.
-- `PASSES` limits map/search to satellites with predicted passes in the current horizon.
-- Orbit filters now also constrain displayed pass cards without changing the pass engine itself.
-- `PANEL` is now a true workspace panel: it can open without a selected satellite and shows mode-specific status/metrics.
-- Selected-object panel content is mode-aware for map, radio, and pass workflows.
-- `TOOLS` is mode-aware and exposes SDR controls only in SDR mode while retaining observer/orbit controls where relevant.
-- Fixed stale mode visibility when releasing a tracked target after switching workspaces.
-- Camera, SGP4, Earth/ISS 3D, Observer/Pass Engine, and SDR backend behavior remain unchanged.
-- Logo/favicon remain intentionally deferred.
+## v0.8.0 — SDR
 
-## v0.8.1 — UI Redesign Shell + Branding
+### Добавлено
 
-- Rebuilt the application shell around a solid dark graphite header.
-- Added workspace modes: `MAP`, `SDR`, and `PASSES`.
-- Added `TOOLS` popover for orbit filters, observer controls, and SDR filters.
-- Added `PANEL` toggle that hides satellite details without cancelling tracking.
-- Added explicit `EARTH` action inside the satellite panel to release camera tracking.
-- Shortened and normalized the header search control.
-- Removed the permanent lower-left status panel and persistent left-side tool panels.
-- Unified cards, controls, spacing, borders, radii, and typography.
-- Removed UI gradients from the shell.
-- Preserved Camera, SGP4 propagation, Earth/ISS 3D, Observer/Pass Engine, and SDR data logic.
-- Logo/favicon intentionally deferred; v0.8.1 ships without logo assets.
+- Переключение рабочего пространства КАРТА/SDR.
+- Получение метаданных передатчиков SatNOGS DB через прокси с постоянным кешем.
+- Фильтры диапазона, режима, назначения, активности и текущей видимости.
+- Связь спутника с передатчиками по NORAD ID.
+- SDR-карточка выбранного объекта: частота передачи, режим, назначение, статус и скорость передачи.
+- Текущая оценка доплеровского смещения и частоты `RX NOW` по скорости изменения дальности.
+- SDR-карточка при наведении и радиопролёты в нижней ленте.
 
-## 0.8.0
+### Сохранено
 
-### Added
+- Визуализация Земли v0.5.7.
+- Состояния камеры v0.4.1.
+- Подсистема модели МКС v0.6.2.
+- Наземный наблюдатель и прогноз пролётов v0.7.0.
 
-- MAP / SDR workspace switch.
-- SatNOGS DB transmitter metadata proxy and persistent cache.
-- RF band, mode, service, active-only and visible-now filters.
-- Satellite-to-transmitter matching by NORAD catalog ID.
-- Selected-object SDR radio panel with downlink frequency, mode, service, status and baud.
-- Real-time Doppler shift / RX NOW estimate from observer-relative range rate.
-- SDR hover card and radio-aware pass strip.
+## v0.7.0 — Наземный наблюдатель
 
-### Preserved
+### Добавлено
 
-- Earth visual baseline v0.5.7.
-- Camera baseline/state machine v0.4.1.
-- Selected ISS 3D model subsystem v0.6.2.
-- Observer/pass subsystem v0.7.0.
+- Координаты наблюдателя через геолокацию браузера или ручной ввод.
+- Локальное сохранение координат.
+- Маркер наземного наблюдателя на глобусе.
+- Текущие азимут, угол места и наклонная дальность выбранного спутника.
+- Маска минимального возвышения **5°/10°/20°/30°**.
+- Прогноз AOS/TCA/LOS на ближайший час в отдельном Web Worker.
+- Максимальный угол места и азимут на момент TCA.
+- Нижняя лента со статусом **СЕЙЧАС** и временем до события, быстрый переход к спутнику.
+- Автообновление прогнозов каждые 5 минут и ручная кнопка обновления.
 
-## 0.7.0
+### Сохранено
 
-### Added
-
-- Observer station from browser geolocation or manual coordinates.
-- Local-only observer persistence.
-- Globe observer marker.
-- Live selected-satellite azimuth, elevation and slant range.
-- User-selectable minimum elevation mask (5°/10°/20°/30°).
-- Next-hour AOS/TCA/LOS pass predictor in a dedicated Web Worker.
-- Maximum elevation and azimuth-at-TCA pass metadata.
-- Bottom pass strip with NOW/countdown state and click-to-track.
-- Automatic five-minute pass refresh plus manual refresh.
-
-### Preserved
-
-- Earth visual baseline v0.5.7 unchanged.
-- Camera baseline/state machine v0.4.1 unchanged.
-- Selected ISS 3D model subsystem v0.6.2 preserved.
-- Backend CelesTrak/model cache behavior unchanged.
+- Визуализация Земли v0.5.7.
+- Камера v0.4.1.
+- Подсистема модели МКС v0.6.2.
+- Кеширование CelesTrak и моделей в Backend.
