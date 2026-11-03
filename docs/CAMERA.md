@@ -1,79 +1,77 @@
-# Camera System — v0.4.2
+# Система камеры SatGeoTracker — v0.4.2
 
-Camera v0.4.2 builds on v0.4.1 with a smooth perspective-lens FOV control while preserving the deterministic ownership state machine. v0.4.1 fixed the Earth-return transition. v0.4 replaces the experimental cursor-pivot v0.3 controller with a deterministic target-based subsystem inspired by KSP.
+Камера v0.4.2 развивает v0.4.1: добавляет плавное управление полем зрения перспективной камеры (FOV), сохраняя строгий автомат состояний. В v0.4.1 исправлен возврат к Земле. В v0.4 экспериментальная камера v0.3 с вращением вокруг курсора заменена на детерминированное управление относительно цели, похожее на KSP.
 
-## Core model
+## Основная модель
 
 ```text
 TARGET + HEADING + PITCH + RANGE
 ```
 
-Exactly one mode owns the camera at a time:
+Одновременно камерой управляет только один режим:
 
 ```text
-EARTH -> TRANSITION -> SATELLITE
-  ^                      |
-  |______________________|
-      Earth click / ESC
+EARTH → TRANSITION → SATELLITE
+  ↑                       │
+  └───────────────────────┘
+     Клик по Земле / ESC
 ```
 
-## Controls
+## Управление
 
-### EARTH
+### `EARTH` — обзор Земли
 
-- Cesium native globe controls are enabled.
-- LMB drag: rotate/tilt the globe.
-- Wheel/right drag: Cesium distance-aware zoom.
-- Ctrl + Wheel: smoothly change perspective FOV from 25° to 110°.
-- Ctrl + 0: return FOV to the 60° default.
-- Hover satellite: highlight only; focus never changes.
-- Click satellite: enter `TRANSITION`.
+- Используются стандартные элементы управления глобусом Cesium.
+- Перетаскивание левой кнопкой мыши (ЛКМ) — поворот и наклон глобуса.
+- Колесо / перетаскивание правой кнопкой мыши (ПКМ) — масштабирование с учётом расстояния.
+- `Ctrl + колесо` — плавное изменение FOV от 25° до 110°.
+- `Ctrl + 0` — сброс FOV к 60°.
+- Наведение на спутник — только подсветка/информация, без переключения камеры.
+- Нажатие на спутник — переход в `TRANSITION`.
 
-### TRANSITION
+### `TRANSITION` — переход к объекту
 
-- Cesium camera inputs are disabled.
-- Camera uses an eased `flyToBoundingSphere` to the chosen moving object.
-- Selecting a different satellite invalidates/cancels the previous transition.
-- Earth click or ESC clears satellite selection immediately, then performs a short controlled `TRANSITION` back to a stable Earth-fixed view before re-enabling Cesium globe controls.
+- Ввод Cesium временно отключается.
+- Используется плавный `flyToBoundingSphere` для выбранного движущегося объекта.
+- Выбор другого спутника отменяет предыдущий переход.
+- Клик по Земле или `ESC` снимает выбор, запускает короткий управляемый возврат к устойчивому виду Земли; стандартное управление Cesium восстанавливается только после завершения перехода.
 
-### SATELLITE
+### `SATELLITE` — слежение
 
-The selected object becomes the camera pivot.
+Выбранный объект становится центром вращения камеры:
 
-- LMB drag horizontally: heading around the satellite.
-- LMB drag vertically: pitch around the satellite.
-- Wheel: logarithmic/multiplicative zoom relative to the satellite.
-- Ctrl + Wheel: smoothly change perspective FOV from 25° to 110° without changing range.
-- Ctrl + 0: return FOV to the 60° default.
-- Earth click: release target, reset `lookAt` transform to `Matrix4.IDENTITY`, perform a short roll-free Earth return flight, then restore Earth navigation.
-- ESC: same deterministic Earth-return path as clicking the globe.
-- Click another satellite: clean target switch.
+- Перетаскивание ЛКМ по горизонтали — изменение `heading` вокруг спутника.
+- Перетаскивание ЛКМ по вертикали — изменение `pitch`.
+- Колесо — логарифмическое/мультипликативное масштабирование относительно спутника.
+- `Ctrl + колесо` — изменение FOV в диапазоне 25°–110° без изменения дальности `range`.
+- `Ctrl + 0` — возврат к FOV 60°.
+- Клик по Земле — освобождение цели, сброс трансформации `lookAt` к `Matrix4.IDENTITY`, короткий возврат к Земле без крена и восстановление её управления.
+- `ESC` — тот же путь возврата.
+- Клик по другому спутнику — чистая смена цели.
 
-## Moving target tracking
+## Слежение за движущимся спутником
 
-The full satellite collection remains on the existing ~1 Hz propagation loop.
-
-The selected satellite is different:
+Полный каталог спутников обновляется прежним циклом расчёта SGP4 с частотой около 1 Гц. Выбранный спутник обрабатывается иначе:
 
 ```text
 scene.postUpdate
       ↓
-current UTC Date
+Текущий момент UTC
       ↓
-SGP4(selected)
+SGP4(выбранный спутник)
       ↓
-one Cartesian3 sample
-      ├─> selected PointPrimitive position
-      └─> camera target
+Один Cartesian3
+      ├──→ положение маркера выбранного спутника
+      └──→ цель камеры
 ```
 
-Both the marker and camera consume the same propagated position for that frame. This prevents the classic one-second tracking jitter where the point and camera are updated on different schedules.
+Маркер и камера получают **одно и то же расчётное положение в каждом кадре**. Это устраняет секундные рывки, возникающие из-за разных циклов обновления.
 
-React is not updated at render FPS. The selected runtime object is mutated by the tracking loop and the existing 1 Hz UI snapshot refreshes panel metrics.
+React не обновляется на каждом кадре. Система слежения изменяет runtime-объект; интерфейс считывает показатели в обычном цикле приблизительно 1 Гц.
 
-## Smooth orbit and zoom
+## Плавное вращение и масштабирование
 
-Satellite camera input writes desired values:
+Управление задаёт целевые значения:
 
 ```text
 targetHeading
@@ -81,22 +79,13 @@ targetPitch
 targetRange
 ```
 
-Each render frame smoothly converges the actual:
+Фактические `heading`, `pitch` и `range` плавно приближаются к ним на каждом кадре с экспоненциальным сглаживанием, не зависящим от частоты кадров.
 
-```text
-heading
-pitch
-range
-```
+Масштабирование колёсиком мультипликативное, а не с постоянным шагом расстояния, поэтому работает как на десятках, так и на тысячах километров.
 
-toward those targets with frame-rate-independent exponential smoothing.
+## v0.4.2 — динамический FOV
 
-Wheel zoom is multiplicative rather than a fixed distance step, which keeps the control usable from tens of kilometres to many thousands of kilometres.
-
-
-## v0.4.2 Dynamic perspective FOV
-
-The lens is now an independent smoothed camera parameter:
+В модели добавлен независимый сглаживаемый параметр `fov`:
 
 ```text
 heading
@@ -105,56 +94,56 @@ range
 fov
 ```
 
-`Ctrl + Wheel` changes only `targetFov`; every render frame exponentially smooths the current perspective frustum toward that target. The allowed range is `25°–110°`, with `60°` as the reset/default lens. A compact `FOV xx°` HUD appears while adjusting and hides automatically.
+`Ctrl + колесо` изменяет только `targetFov`. Перспективный frustum плавно изменяет угол обзора на каждом кадре; допустимые значения — **25°–110°**, по умолчанию и после сброса — **60°**. Во время изменения появляется компактная временная надпись `FOV xx°`.
 
-The modified wheel event is captured before Cesium's normal globe zoom handler, so Earth zoom and FOV never fire from the same input. Normal wheel input remains untouched. This is deliberately not a shader-based fisheye projection: standard Cesium perspective and screen picking remain aligned.
+Модифицированное событие колеса перехватывается до штатного масштабирования Cesium. Обычное вращение колеса работает по-прежнему. Это **не fisheye-шейдер**: сохраняются стандартная перспектива Cesium и корректный выбор объектов.
 
-## v0.4.1 Earth-return hotfix
+## v0.4.1 — исправление возврата к Земле
 
-`Camera.lookAt()` changes the camera reference frame to the target-local ENU frame. Returning to normal globe navigation must therefore reset the transform with `camera.lookAtTransform(Matrix4.IDENTITY)` before Cesium's `ScreenSpaceCameraController` owns the camera again.
+Вызов `Camera.lookAt()` переводит систему отсчёта камеры в локальную ENU-систему объекта. Перед возвратом штатного управления Cesium нужно вызвать `camera.lookAtTransform(Matrix4.IDENTITY)`.
 
-v0.4.1 also removes the redundant `setView()` that was re-applying the satellite-era world pose during release. Instead it:
+Алгоритм возврата:
 
-1. invalidates/cancels the active satellite flight;
-2. resets the camera transform to `Matrix4.IDENTITY`;
-3. clears the selected satellite/orbit;
-4. computes a stable roll-free Earth view from the current hemisphere;
-5. performs a short `flyTo`;
-6. reasserts the identity transform;
-7. only then re-enables Cesium Earth controls.
+1. Отменить активный перелёт к спутнику.
+2. Сбросить трансформацию в `Matrix4.IDENTITY`.
+3. Снять выбор спутника и орбиты.
+4. Вычислить устойчивый вид на текущую полусферу без крена.
+5. Выполнить короткий `flyTo`.
+6. Ещё раз подтвердить единичную трансформацию.
+7. Только после этого вернуть управление Cesium.
 
-Repeated Earth clicks while this transition is active are ignored so transition callbacks cannot stack.
+Избыточный `setView()`, возвращавший прежнюю спутниковую позу, удалён. Повторные клики по Земле во время перехода игнорируются, чтобы callbacks не накапливались.
 
-## Earth collision guard
+## Защита от столкновения с Землёй
 
-Positive HPR pitch moves the satellite camera below the local tangent plane. For LEO objects a large range could otherwise place the camera inside Earth.
+Положительный HPR `pitch` опускает камеру ниже локальной касательной плоскости спутника. Для LEO при большой дальности это могло бы переместить камеру внутрь Земли.
 
-v0.4 dynamically limits the positive pitch using:
+Ограничение положительного угла вычисляется по:
 
 ```text
-satellite altitude
-camera range
-Earth clearance
+высота спутника
+дальность камеры
+минимальный зазор над Землёй
 ```
 
-The closer the camera gets to the satellite, the more below-target viewing becomes available.
+На близком расстоянии становится доступен более широкий обзор ниже спутника.
 
-## Source layout
+## Расположение исходников
 
 ```text
 frontend/src/camera/
-├─ CameraManager.ts   # state machine, input, tracking, cleanup
-├─ cameraConfig.ts    # tuning values
-├─ cameraMath.ts      # angle/smoothing helpers
-├─ cameraTypes.ts     # contracts/state
+├─ CameraManager.ts   # состояния, ввод, слежение и освобождение ресурсов
+├─ cameraConfig.ts    # параметры настройки
+├─ cameraMath.ts      # углы и сглаживание
+├─ cameraTypes.ts     # типы и контракты
 └─ index.ts
 ```
 
-`frontend/src/camera.ts` remains only as a compatibility re-export. Camera physics is no longer embedded in `App.tsx`.
+`frontend/src/camera.ts` оставлен как совместимый реэкспорт. Физика камеры больше не находится непосредственно в `App.tsx`.
 
-## Debugging
+## Отладка
 
-Press `F8` to toggle the development camera overlay:
+`F8` включает/выключает информацию:
 
 ```text
 MODE
@@ -167,53 +156,46 @@ CESIUM IN
 CUSTOM IN
 ```
 
-This makes controller ownership visible when diagnosing regressions.
+Поля остаются в точной форме, которую показывает отладочный интерфейс.
 
-## Camera invariants
+## Инварианты камеры
 
-1. Exactly one mode owns the camera: `EARTH | TRANSITION | SATELLITE`.
-2. Hover never changes focus.
-3. Clicking a satellite requests satellite focus.
-4. Clicking the rendered globe returns to Earth focus.
-5. ESC returns to Earth focus.
-6. While tracking, the selected satellite remains the target every rendered frame.
-7. The selected marker and camera use the same SGP4 sample.
-8. The 1 Hz global loop never overwrites the tracked marker.
-9. Cesium native inputs and satellite custom inputs are never active together.
-10. Switching targets invalidates an older transition before cancelling it.
-11. Camera DOM/Cesium listeners are cleaned up in `destroy()`.
-12. React is not used for per-frame camera physics.
-13. Ctrl+Wheel changes only perspective FOV; normal wheel behavior is preserved.
-14. FOV remains within 25°–110° and can be reset to 60° with Ctrl+0.
+1. В любой момент только один владелец камеры: `EARTH | TRANSITION | SATELLITE`.
+2. Наведение никогда не переключает камеру.
+3. Нажатие на спутник запрашивает слежение.
+4. Нажатие на отображённый глобус возвращает обзор Земли.
+5. `ESC` освобождает цель.
+6. Во время слежения цель пересчитывается в каждом кадре.
+7. Маркер и камера получают один образец SGP4.
+8. Цикл 1 Гц не перезаписывает маркер отслеживаемого спутника.
+9. Стандартный ввод Cesium и собственный ввод спутникового режима одновременно не активны.
+10. Смена цели отменяет предыдущий переход.
+11. Слушатели DOM/Cesium удаляются в `destroy()`.
+12. React не используется для покадровой физики камеры.
+13. `Ctrl + колесо` изменяет только FOV, обычное колесо работает как раньше.
+14. FOV ограничен 25°–110° и сбрасывается к 60° через `Ctrl + 0`.
 
-## Acceptance checklist
+## Приёмочный чек-лист
 
-- Earth navigation works after startup.
-- Hovering several objects never moves the camera.
-- Satellite click performs a smooth transition.
-- Selected object stays centered for at least 30 seconds without 1 Hz jumps.
-- LMB orbit keeps the selected object as pivot.
-- Repeated wheel zoom does not drift the target.
-- Ctrl+Wheel changes FOV without changing Earth zoom or satellite range.
-- Ctrl+0 smoothly returns FOV to 60°.
-- Earth click releases tracking immediately; Earth controls are restored only after the short Earth-return transition completes.
-- A -> B satellite switching leaves only B tracked.
-- Clicking a new target during an existing transition does not corrupt transforms.
-- ESC always releases satellite tracking.
-- Repeated Earth/satellite switching does not accumulate handlers/controllers.
-- F8 shows exactly one input owner.
+- [ ] После запуска работает стандартное управление Землёй.
+- [ ] Наведение на разные спутники не перемещает камеру.
+- [ ] Нажатие на спутник вызывает плавный переход.
+- [ ] Объект удерживается в центре не менее 30 секунд без рывков 1 Гц.
+- [ ] Вращение ЛКМ сохраняет спутник центром.
+- [ ] Многократное изменение дальности не уводит цель.
+- [ ] `Ctrl + колесо` меняет только FOV, не масштабирует Землю/дальность до спутника.
+- [ ] `Ctrl + 0` возвращает FOV к 60°.
+- [ ] Клик по Земле снимает слежение, штатное управление возвращается после завершения короткого перехода.
+- [ ] Переключение спутников A → B оставляет в слежении только B.
+- [ ] Выбор новой цели во время перехода не нарушает трансформации.
+- [ ] `ESC` всегда освобождает слежение.
+- [ ] Повторные переключения не накапливают обработчики.
+- [ ] `F8` показывает одного владельца ввода.
 
-## Not part of Camera v0.4
+## Вне задач камеры v0.4
 
-- Earth imagery upgrade;
-- terrain;
-- city/country labels;
-- Google Photorealistic 3D Tiles;
-- 3D satellite models;
-- time acceleration / rewind;
-- ground-track rendering.
+Обновление текстур Земли, рельеф, подписи городов/стран, Google Photorealistic 3D Tiles, 3D-модели других спутников, ускорение/перемотка времени и наземные трассы не входят в эту подсистему.
 
+## Совместимость с моделью v0.6
 
-## v0.6 model-view compatibility
-
-Camera v0.4.2 retains the v0.4.1 ownership/tracking baseline: its ownership state machine, input routing, tracking loop and Earth-return transform logic are unchanged. v0.6 adds only two model-view accommodations: `CameraTargetSample` can optionally request a preferred initial range, and the satellite minimum range is extended from 15 km to 250 m. The ISS registry requests 4 km so its real-scale mesh is visible after the transition. Ordinary satellite points retain the previous computed initial framing.
+Состояния камеры, ввод, цикл слежения и возврат к Земле остаются на базе v0.4.1. Для v0.6 добавлены лишь две возможности отображения модели: необязательная предпочтительная начальная дальность в `CameraTargetSample` и минимальная дальность **250 м** вместо **15 км**. Для МКС выбран начальный диапазон **4 км**, обычные точки спутников используют прежнюю логику.

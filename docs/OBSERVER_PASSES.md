@@ -1,27 +1,27 @@
-# Observer & Pass Engine v0.7.0
+# Наземный наблюдатель и прогноз пролётов — v0.7.0
 
-## Purpose
+## Назначение
 
-The observer subsystem converts SatGeoTracker from a geocentric catalog viewer into a location-aware receiving tool.
+Подсистема наблюдателя превращает SatGeoTracker из каталога объектов вокруг Земли в инструмент для наблюдения за ними из конкретной точки.
 
-It answers three practical questions for a ground station:
+Она отвечает на три вопроса:
 
-1. Where is the selected spacecraft in my local sky?
-2. Is it above my configured elevation mask now?
-3. Which spacecraft will cross that mask during the next hour?
+1. Где выбранный спутник находится на местном небе?
+2. Находится ли он сейчас выше заданной маски возвышения?
+3. Какие объекты пересекут эту маску в течение ближайшего часа?
 
-## Observer location
+## Координаты наблюдателя
 
-The user can choose either:
+Доступны два способа ввода:
 
-- browser geolocation (requires browser permission), or
-- manual latitude / longitude / altitude.
+- геолокация браузера после разрешения пользователя;
+- ручной ввод широты, долготы и высоты.
 
-Coordinates are stored only in browser `localStorage` by the frontend. The observer position is not sent to FastAPI by v0.7.0.
+Координаты сохраняются **только локально** в `localStorage` браузера. В версии подсистемы v0.7.0 они не отправляются в FastAPI.
 
-## Local look angles
+## Угловые координаты и дальность
 
-For a selected satellite:
+Для выбранного спутника:
 
 ```text
 OMM + UTC
@@ -31,51 +31,55 @@ SGP4
 ECI
    ↓ GMST
 ECF
-   ↓ observer geodetic position
-Topocentric look angles
-   ├─ azimuth
-   ├─ elevation
-   └─ slant range
+   ↓ Геодезическое положение наблюдателя
+Топоцентрические координаты
+   ├─ азимут
+   ├─ угол места
+   └─ наклонная дальность
 ```
 
-The implementation uses `satellite.js` coordinate transforms and keeps the existing SGP4 runtime model unchanged.
+Используются преобразования `satellite.js`; базовая модель SGP4 не изменяется.
 
-## Pass prediction
+## Прогноз пролётов
 
-Prediction runs in `passPredictionWorker.ts`, not in the render thread.
+Прогноз рассчитывается в `passPredictionWorker.ts`, **отдельно от потока рендеринга**.
 
-Default parameters:
+Параметры по умолчанию:
 
-- horizon: 60 minutes;
-- coarse scan step: 60 seconds;
-- threshold crossing refinement: binary refinement;
-- TCA/max-elevation refinement: bounded peak search;
-- minimum elevation mask: user selectable 5°, 10°, 20° or 30°;
-- automatic refresh: every 5 minutes.
+- горизонт прогноза — **60 минут**;
+- шаг предварительного перебора — **60 секунд**;
+- уточнение пересечения порога — двоичный поиск;
+- уточнение TCA / максимального угла места — ограниченный поиск максимума;
+- маска минимального возвышения — 5°, 10°, 20° или 30° по выбору пользователя;
+- автоматическое обновление — каждые **5 минут**.
 
-A pass contains:
+Время пролёта содержит три основных события:
 
-```text
-AOS  acquisition of signal / elevation-mask entry
-TCA  peak elevation inside the pass
-LOS  loss of signal / elevation-mask exit
-```
+| Событие | Значение |
+| --- | --- |
+| **AOS** | Появление сигнала / пересечение маски возвышения снизу |
+| **TCA** | Момент максимального угла места за пролёт |
+| **LOS** | Потеря сигнала / пересечение маски сверху |
 
-Objects continuously above the mask for the full prediction window are intentionally omitted from the "overhead passes" list. This prevents GEO-like continuous visibility from flooding a list intended for upcoming crossing events.
+Объекты, которые остаются выше порога **всё время прогнозного окна**, намеренно исключаются из списка «ближайших пролётов». Это не позволяет непрерывно видимым объектам вроде GEO заполнять список, рассчитанный на события пересечения порога.
 
-## UI behavior
+## Интерфейс
 
-- Green globe point: observer station.
-- Observer panel: coordinates, source, elevation mask, device/manual controls.
-- Selected satellite panel: live elevation, azimuth, range, visibility and next pass.
-- Bottom pass strip: upcoming/active passes; clicking a pass selects and tracks that satellite.
+- **Зелёная точка на глобусе** — наземная станция наблюдателя.
+- **Панель наблюдателя** — координаты и их источник, маска возвышения, геолокация или ручной ввод.
+- **Панель выбранного спутника** — текущие угол места, азимут, дальность, видимость и ближайший пролёт.
+- **Нижняя лента** — активные и будущие пролёты; по нажатию выбирается спутник и включается слежение.
 
-## SDR roadmap dependency
+## Связь с SDR
 
-v0.7.0 intentionally contains no RF database yet. The next SDR layer can join transmitter metadata to the existing NORAD ID and use this observer/pass engine for:
+На этапе v0.7.0 справочника радиочастот ещё не было. В более поздней версии v0.8.0 SDR-подсистема получила связь между передатчиками и объектами по NORAD ID.
 
-- receivable-now filters;
-- downlink frequencies and modes;
-- pass-quality filters;
-- Doppler correction;
-- future rotator/SDR control integration.
+Прогнозная подсистема используется как основа для:
+
+- фильтров «можно принять сейчас»;
+- отображения частот и типов передач;
+- оценки качества пролёта;
+- доплеровской поправки;
+- возможного будущего управления SDR и поворотным устройством антенны.
+
+Наличие передатчика в каталоге **не гарантирует успешный приём**.

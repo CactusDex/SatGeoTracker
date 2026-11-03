@@ -1,20 +1,22 @@
-# SatGeoTracker v0.9.0 RC2 — Search & Mobile Layout
+# SatGeoTracker v0.9.0 RC2 — поиск и мобильная компоновка
 
-This is a release candidate, not yet a final validated Windows release.
+Это **исторический кандидат на релиз**, не отдельный подтверждённый финальный Windows-релиз.
 
-## Changes
-- Search prioritizes NORAD matches and actual name matches over substrings. The ISS ZARYA object (NORAD 25544) takes precedence for `ISS`.
-- Same NORAD ID appears only once in results; real ISS modules with distinct NORAD IDs remain accessible.
-- Mobile SDR and PASSES modes use one 162px collapsed pass drawer. Expanded cards retain extra data and internal scrolling.
-- Unchanged: orbit mechanics, CameraManager, pass predictions, SDR data, favorites persistence, graphics assets.
+## Изменения
 
-## Windows steps
-1. Unzip to a **new** folder, keep v0.9.0 as fallback.
-2. Run `setup.cmd`, then `dev.cmd`.
-3. Search `ISS`, `25544`, `WGS`; check ranking and unique NORAD IDs.
-4. With observer configured, switch SDR/PASSES at 390, 520, 768 px and check bottom drawer height. Expand/collapse.
-5. Open DevTools Console and confirm no new Cesium worker errors; run `npm run build` in `frontend`.
+- Поиск отдаёт приоритет точному NORAD ID и релевантным названиям перед случайными вхождениями подстроки. Основной объект ISS (ZARYA), NORAD 25544, находится первым по запросу `ISS`.
+- Один NORAD ID показывается не более одного раза; реальные отдельные модули МКС с другими идентификаторами остаются доступными.
+- В мобильных режимах SDR и ПРОЛЁТЫ у свёрнутой ленты одинаковая высота **162 px**. В раскрытом состоянии сохраняются дополнительные сведения и внутренняя прокрутка.
+- Не изменялись: орбитальная механика, CameraManager, прогнозы, SDR-данные, сохранение избранного и графические ресурсы.
 
-## QA caveats
-- Automated tests verify search logic and CSS structure; visual browser testing remains required.
-- Not yet published to GitHub main.
+## Проверка в Windows
+
+1. Распакуйте в **новую** папку; сохраните v0.9.0 как резервную.
+2. Запустите `setup.cmd`, затем `dev.cmd`.
+3. Проверьте `ISS`, `25544`, `WGS`, порядок результатов и уникальность NORAD.
+4. С настроенным наблюдателем переключите SDR/ПРОЛЁТЫ при ширинах 390, 520 и 768 px, сравните высоту ленты, раскройте и сверните её.
+5. Откройте DevTools Console и убедитесь, что нет новых ошибок Cesium Workers; выполните `npm run build` в папке `frontend`.
+
+## Ограничения на этапе RC2
+
+Автоматические тесты проверяли логику поиска и CSS-контракты; визуальную проверку требовалось выполнить отдельно. На момент RC2 изменения ещё не были опубликованы в GitHub `main`. Позднее они вошли в v0.9.1.

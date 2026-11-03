@@ -1,25 +1,41 @@
-# Satellite 3D Models — v0.6.2
+# 3D-модели спутников — v0.6.2 и исправление v0.8.8
 
-## ISS readiness hotfix
+Документ описывает подсистему детализированных моделей, прежде всего МКС, в SatGeoTracker.
 
-Cesium `Model.fromGltfAsync()` returns a `Model` before it has necessarily completed the scene-side processing required for `Model.ready`. The model must be inserted into the scene and allowed to advance through render frames before readiness-dependent properties such as `boundingSphere` are used.
+## Исправление готовности модели МКС (v0.6.2)
 
-v0.6.2 therefore loads in this order:
+`Cesium Model.fromGltfAsync()` может вернуть объект `Model` до завершения обработки сцены, необходимой для `Model.ready`.
 
-`fromGltfAsync -> add to scene -> wait Model.ready / readyEvent -> read boundingSphere -> normalize to 109 m -> show when selected`.
+Поэтому сначала нужно добавить модель в сцену и дождаться нескольких кадров отрисовки, после которых становятся доступны свойства вроде `boundingSphere`.
 
-Model errors are now logged to the browser console and surfaced in the selected-object panel instead of being replaced by a generic fallback message.
+Правильная последовательность:
 
-Camera v0.4.1 and Earth v0.5.7 are intentionally unchanged.
+```text
+fromGltfAsync
+    ↓
+добавление Model в сцену
+    ↓
+ожидание Model.ready / readyEvent
+    ↓
+чтение boundingSphere
+    ↓
+нормализация габарита до 109 м
+    ↓
+отображение при выборе МКС
+```
 
+Ошибки модели записываются в консоль браузера и показываются в панели выбранного объекта, а не заменяются неопределённым общим сообщением.
 
-## v0.8.8 — NASA GLB scene cleanup
+В этом исправлении не менялись алгоритмы камеры v0.4.1 и визуализация Земли v0.5.7.
 
-Original NASA `isscombine` scene contains seven nonstation construction meshes
-(`bendedtru*`, `pCylinder*`) at y ~= 41 in source coordinates, displaced from
-the true ISS mesh. They produce a detached cluster when loaded at true scale.
-`backend/app/iss_model_cleanup.py` removes **only their scene references**
-while retaining all original binary vertex data. Unknown GLB layouts pass
-through unchanged. Correction is applied on download and on existing cache,
-while `/api/models/iss.glb?v=0.8.8` bypasses previous browser immutable cache.
-All credit remains NASA / Michael D. Carbajal.
+## v0.8.8 — удаление артефактных узлов NASA GLB
+
+Исходная сцена NASA `isscombine` содержит семь посторонних конструкционных mesh-узлов с именами `bendedtru*` и `pCylinder*`, расположенных приблизительно на `y ≈ 41` в координатах исходной модели.
+
+При корректном физическом масштабе они визуализировались отдельным серым скоплением рядом с МКС.
+
+Модуль `backend/app/iss_model_cleanup.py` убирает **только ссылки на эти узлы в сцене**, сохраняя исходные бинарные данные вершин. Неизвестные форматы/структуры GLB оставляются без изменений.
+
+Исправление применяется при скачивании модели и к уже имеющемуся кешу. Адрес `/api/models/iss.glb?v=0.8.8` обходит прежний браузерный immutable-кеш.
+
+Авторы исходного 3D-ресурса: **NASA / Michael D. Carbajal**. Атрибуция сохранена.

@@ -1,200 +1,167 @@
-# SatGeoTracker contributor instructions
+# SatGeoTracker — инструкции для участников разработки
 
-## Product goal
+## Назначение
 
-SatGeoTracker (SGT) is an educational real-time 3D satellite tracker.
-The MVP must visualize real orbital objects around a CesiumJS globe and compute current positions from orbital elements with SGP4.
+SatGeoTracker (SGT) — учебное веб-приложение для интерактивного 3D-отслеживания спутников Земли. Оно отображает реальные орбитальные объекты вокруг глобуса CesiumJS и рассчитывает их положение по орбитальным элементам с помощью SGP4.
 
-## Stable architecture
+Актуальная версия: **v0.9.1**. Исторические требования v0.4–v0.8 ниже сохраняют смысл ограничений конкретных подсистем, но не отменяют реализованные возможности более поздних версий.
 
-- Frontend: React + TypeScript + Vite.
-- 3D engine: CesiumJS.
-- Orbit propagation: `satellite.js` using OMM JSON and SGP4.
-- Backend: FastAPI.
-- Upstream orbital source: CelesTrak GP/OMM JSON.
-- Future persistent storage: PostgreSQL.
-- Development API traffic goes through the Vite `/api` proxy to FastAPI.
+## Базовая архитектура
 
-Do not replace CesiumJS, satellite.js, FastAPI, or OMM/SGP4 without an explicit project decision.
+- Frontend — React, TypeScript, Vite.
+- 3D-движок — CesiumJS.
+- Прогноз орбит — `satellite.js`, OMM JSON, SGP4.
+- Backend — FastAPI.
+- Источник орбитальных элементов — CelesTrak GP/OMM JSON.
+- Во время разработки API доступен через Vite-прокси `/api` → FastAPI.
+- **PostgreSQL не используется и не требуется** для актуального локального MVP. Историческая схема находится в `database/schema.sql`.
 
-## Important data rule
+Не заменять CesiumJS, satellite.js, FastAPI или подход OMM/SGP4 без отдельного решения по проекту.
 
-Do NOT persist per-second satellite latitude, longitude, altitude, or speed for the MVP.
-These are derived runtime values:
+## Правила хранения орбитальных данных
 
-`OMM + UTC time -> SGP4 -> position/velocity -> geodetic coordinates`.
+**Не сохранять** ежесекундные широту, долготу, высоту и скорость каждого спутника в БД. Это вычисляемые значения:
 
-Persist satellite identity and orbital-element history only.
+```text
+OMM + время UTC → SGP4 → положение/скорость → геодезические координаты
+```
 
-## MVP scope
+При будущем появлении постоянного хранилища можно сохранять идентичность объектов и историю наборов орбитальных элементов, но не поток ежесекундных координат.
 
-Required:
+## Текущий функциональный объём
 
-1. 3D Earth.
-2. Real satellite data.
-3. SGP4 real-time propagation.
-4. Large active-satellite dataset.
-5. Satellite picking.
-6. Selected-object highlight.
-7. Orbit path for selected object only.
-8. Name.
-9. NORAD ID.
-10. International ID.
-11. Altitude.
-12. Speed.
-13. Orbit class.
-14. Search.
-15. LEO/MEO/GEO filters.
-16. Live UTC clock.
-17. Collapsible information panel.
-18. Backend CelesTrak cache.
+Реализованы: 3D-глобус, реальные орбитальные данные, SGP4, большой ACTIVE-каталог, выбор и подсветка спутников, траектория выбранного объекта, имя/NORAD ID/международное обозначение, высота, скорость, класс орбиты, поиск и фильтры LEO/MEO/GEO, UTC-часы, панель сведений и кеш CelesTrak.
 
-Deferred until the above is stable:
+В последующих этапах добавлены: камера слежения и FOV, модель МКС, наземный наблюдатель, прогнозы пролётов, SDR/SatNOGS, избранное, адаптивная компоновка и универсальная карточка наведения.
 
-- country/owner enrichment;
-- news feed;
-- authentication;
-- favorites;
-- user accounts;
-- historical position storage;
-- commercial features.
+Возможные будущие функции рассматриваются отдельно: справочники стран/владельцев, новые модели спутников, временная симуляция, оборудование SDR. Регистрация, профили, коммерческие функции и серверная БД **не входят в текущие требования**.
 
-## Local development
+## Локальная разработка
 
-First setup:
+Первичная установка:
 
 ```powershell
 .\setup.cmd
 ```
 
-Start:
+Запуск:
 
 ```powershell
 .\dev.cmd
 ```
 
-Stop:
+Остановка:
 
 ```powershell
 .\stop-dev.cmd
 ```
 
-Expected endpoints:
+Адреса:
 
 - `http://127.0.0.1:5173/`
 - `http://127.0.0.1:8000/health`
 - `http://127.0.0.1:8000/api/satellites`
 
-## Validation before finishing code changes
+## Проверки перед завершением изменений
 
-Run at least:
+Из папки `frontend`:
 
 ```powershell
-cd frontend
+npm run test:all
+npm run check:cesium
 npm run build
 ```
 
-and verify backend syntax/imports with the project venv:
+Проверка Python-компонентов из корня проекта (в установленном окружении):
 
 ```powershell
 .\backend\.venv\Scripts\python.exe -m compileall backend\app
 ```
 
-If runtime behavior changed, also start `dev.cmd` and check `/health` plus the browser UI.
+Если изменилось поведение во время исполнения, запустить `dev.cmd`, проверить `/health` и браузерный интерфейс.
 
-## Frontend rules
+**Ограничение v0.9.1:** при прежней Windows-проверке production-сборка падала на WASM/Web Worker из `satellite.js`. Конфигурация `worker.format = "es"` внесена, но успешный `npm run build` не подтверждён. Не объявлять сборку успешной без фактического запуска.
 
-- Keep TypeScript strict.
-- Avoid one React component per satellite.
-- Large satellite rendering should use Cesium primitive collections, not thousands of React DOM nodes.
-- Orbit trajectories are calculated only for selected objects unless requirements change.
-- Heavy all-satellite propagation should move to a Web Worker as the next performance step.
-- Keep the main interface single-screen for MVP.
-- Camera v0.4 is centralized under `frontend/src/camera/` and uses an explicit `EARTH | TRANSITION | SATELLITE` state machine.
-- Preserve the camera invariant `target + heading + pitch + range` in satellite mode.
-- Hover must never change camera focus. Earth click / ESC must release satellite tracking.
-- Never allow Cesium native camera inputs and custom satellite camera inputs to own the camera simultaneously.
-- The selected satellite is propagated every render frame while tracked; the global collection remains on its slower loop.
-- Do not change Earth imagery/terrain while working on camera-only tasks.
+## Правила Frontend
 
-## Backend rules
+- Сохранять строгую проверку TypeScript.
+- Не создавать React-компонент на каждый спутник.
+- Большой каталог рисовать через коллекции примитивов Cesium, а не тысячи элементов DOM.
+- Траекторию вычислять только для выбранного объекта, пока требования не изменятся.
+- Возможный следующий шаг по производительности — перенос массового SGP4 в Web Worker после замеров.
+- Сохранять одноэкранную компоновку основного интерфейса.
+- Код камеры — `frontend/src/camera/`, состояния `EARTH | TRANSITION | SATELLITE`.
+- Для камеры спутника сохранять модель `target + heading + pitch + range`.
+- Наведение **не должно** переключать цель камеры. Клик по Земле / ESC отменяют слежение.
+- Стандартный ввод камеры Cesium и пользовательский ввод режима спутника не могут владеть камерой одновременно.
+- Выбранный спутник рассчитывается покадрово, полный набор спутников — более медленным циклом.
+- Не изменять изображения Земли и рельеф в задачах, касающихся только камеры.
 
-- Async FastAPI I/O.
-- Cache upstream CelesTrak responses in the shared per-user cache directory.
-- Do not hammer CelesTrak on every browser request.
-- Preserve stale cache fallback when upstream is unavailable.
-- Return diagnostic upstream information on 502 errors without exposing secrets.
+## Правила Backend
 
-## Database rules
+- Использовать асинхронный FastAPI I/O там, где необходимо.
+- Кешировать ответы CelesTrak в общем пользовательском каталоге кеша.
+- Не выполнять новый запрос к CelesTrak при каждом обращении браузера.
+- Сохранять fallback к устаревшему кешу при недоступности источника.
+- При ошибках 502 возвращать полезную диагностику внешнего источника без секретов.
 
-Canonical schema is `database/schema.sql`.
-Core tables:
+## Историческая схема данных
 
-- `satellites`
-- `orbital_elements`
-- `sync_runs`
+Файл `database/schema.sql` содержит таблицы:
 
-Country/owner lookup can be introduced later as a separate normalized table.
+- `satellites`;
+- `orbital_elements`;
+- `sync_runs`.
 
-## Change discipline
+При будущем развитии может появиться отдельный нормализованный справочник стран/владельцев. **Не подключать БД лишь ради её наличия**.
 
-Prefer small, runnable increments.
-Do not add unrelated features while fixing startup, data loading, SGP4 correctness, or rendering performance.
-Update README/docs whenever launch commands, ports, architecture, or data contracts change.
+## Дисциплина изменений
 
-## v0.5 Earth visual baseline
+Предпочитать небольшие проверяемые изменения. Не добавлять посторонние функции во время исправления запуска, загрузки данных, точности SGP4 или производительности.
 
-Earth rendering is now owned by `frontend/src/earth/EarthVisualController.ts`.
+При изменении команд запуска, портов, архитектуры или контрактов данных обновлять README и соответствующую документацию.
 
-Hard rule: do not modify CameraManager to implement imagery, atmosphere, lighting, or Earth quality. Camera v0.4.1 is the stable camera baseline.
+## Визуализация Земли: базовые ограничения v0.5
 
-The application UI is locked to HIGH Earth quality. Remote imagery failure must never prevent the globe, satellites, or local demo from rendering; Natural Earth remains the fallback underlay.
+Визуализация находится в `frontend/src/earth/EarthVisualController.ts`. Не менять CameraManager ради освещения, текстур, атмосферы и качества глобуса.
 
-## Earth v0.5.6
+Качество Земли в интерфейсе установлено в HIGH; выбор LOW/MED/HIGH пользователю убран. Не возвращать его без отдельного запроса.
 
-Earth HIGH uses direct ArcGIS cached raster tile URLs through `UrlTemplateImageryProvider`. Keep the local Natural Earth layer underneath as a fast placeholder/fallback. Keep the World Boundaries and Places layer hidden at orbital overview distance and only wake it when camera height enters the map-context fade range. Do not trade away the v0.5.1 visual quality to optimize startup. Camera v0.4.1 remains a locked baseline.
+Ошибка удалённых снимков не должна препятствовать отображению глобуса и спутников. Natural Earth II сохраняется как резервная подложка.
 
-The end-user quality selector was removed in v0.5.6. Do not reintroduce LOW/MED/HIGH UI controls unless explicitly requested; startup should always request HIGH immediately.
+### Исторический этап v0.5.6
 
+В v0.5.6 режим HIGH использовал прямые кешированные тайлы ArcGIS через `UrlTemplateImageryProvider`. Границы и подписи были локальными, а при необходимости использовался бекенд-прокси. Исторические правила этого этапа: не возвращать внешнюю зависимость от `World_Boundaries_and_Places`, хранить картографический контекст в `frontend/public/map-data/`, сохранять кеш и fallback, не жертвовать визуальным качеством и не изменять камеру одновременно с визуализацией Земли.
 
-### v0.5.6 map reliability rules
+### Актуальная базовая логика v0.5.7
 
-- Do not reintroduce the ArcGIS `World_Boundaries_and_Places` MapServer as a runtime dependency for country/city labels.
-- Keep local map context under `frontend/public/map-data/`.
-- Keep World Imagery browser requests same-origin through `/api/map/imagery/{z}/{y}/{x}`.
-- Keep the persistent backend tile cache and stale-tile fallback.
-- Do not modify Camera v0.4.1 while working on Earth visuals.
+- Для HIGH используется `ArcGisMapServerImageryProvider.fromUrl` с ArcGIS World Imagery и асинхронная обёртка `ImageryLayer.fromProviderAsync`.
+- Natural Earth II — мгновенная резервная подложка.
+- Границы стран и подписи не зависят от удалённых изображений.
+- Поддерживать адаптивную детализацию `maximumScreenSpaceError`: уменьшать порог при приближении.
+- Для HIGH сохранять `useBrowserRecommendedResolution=false` (отрисовка в пикселях устройства).
+- Не переводить основной путь снимков через FastAPI-прокси без подтверждённой необходимости.
+- Не менять логику возврата камеры к Земле при правках визуализации.
 
-### Earth v0.5.7 adaptive-detail baseline
+## 3D-модели спутников — базовая логика v0.6.2
 
-- Default HIGH imagery must use Cesium `ArcGisMapServerImageryProvider.fromUrl` against ArcGIS World Imagery, wrapped by `ImageryLayer.fromProviderAsync` so provider initialization never blocks startup.
-- Keep Natural Earth II underneath as the instant placeholder/fallback.
-- Keep local borders/country/city labels independent from remote imagery.
-- Preserve adaptive globe LOD: tighten `maximumScreenSpaceError` as camera height decreases instead of forcing maximum detail at orbital overview distances.
-- Keep `useBrowserRecommendedResolution=false` in HIGH so Cesium renders in device pixels.
-- Do not route the default imagery path through the FastAPI tile proxy unless a future regression proves the direct provider unusable.
-- Do not modify Camera v0.4.1 while working on Earth visuals.
+- Для полного каталога ACTIVE использовать `PointPrimitiveCollection`, а не отдельный glTF для каждого объекта.
+- Код моделей расположен в `frontend/src/models/`; выбор — через реестр.
+- Детализированная модель в базовом релизе есть для NORAD 25544 (МКС).
+- Положение модели должно использовать тот же Cartesian3, что и покадровый расчёт SGP4 выбранного объекта.
+- OMM/SGP4 описывают орбиту, **не фактическую ориентацию корпуса МКС**; нельзя выдавать ориентацию по скорости за телеметрию положения корпуса.
+- Сохранять `minimumPixelSize=0` ради реального масштаба; использовать LOD точка/модель, не увеличивать физический размер незаметно.
+- Ошибка модели должна возвращать отображение PointPrimitive, не ломая слежение.
+- Сохранять визуализацию Земли v0.5.7, атмосферу, подписи и адаптивную детализацию.
+- Для модели допустимы предпочтительная дальность и минимальное приближение до **250 м**; не вводить второго владельца камеры и не изменять возврат к Земле.
 
+## Наземный наблюдатель и прогнозы — базовая логика v0.7
 
-## v0.6.2 selected-model baseline
-
-- Keep the full ACTIVE catalog as `PointPrimitiveCollection`; do not instantiate one glTF model per satellite.
-- Detailed spacecraft models belong under `frontend/src/models/` and are selected through the registry.
-- In v0.6.2 only NORAD 25544 (ISS) has a detailed model.
-- The selected model must use the exact Cartesian3 generated by the existing per-frame tracked-object SGP4 path.
-- OMM/SGP4 is orbital state, not spacecraft body-attitude telemetry. Do not describe the visual velocity-aligned orientation as true ISS attitude.
-- Keep `minimumPixelSize=0` for real-scale spacecraft rendering. Use point/model LOD rather than silently inflating the physical model.
-- Model load failure must fall back to the PointPrimitive without breaking tracking.
-- Preserve Earth v0.5.7 imagery, atmosphere, local borders/cities, and adaptive LOD while working on models.
-- Camera v0.4.1 remains the state-machine baseline. v0.6.2 may use the documented optional preferred target range / 250 m close-zoom extension, but must not alter Earth-return logic or introduce a second camera owner.
-
-## v0.7 observer/pass baseline
-
-- Ground-station logic lives under `frontend/src/observer/` and must remain separate from CameraManager/EarthVisualController.
-- Observer latitude/longitude/altitude are local browser state; v0.7 does not send them to FastAPI.
-- Browser geolocation must remain permission-based and manual coordinates must remain available as fallback.
-- Pass prediction must run in the Web Worker, not in the Cesium render loop or React 1 Hz update loop.
-- Default pass horizon is 60 minutes and the minimum elevation mask is a user-facing filter.
-- AOS/TCA/LOS are derived from OMM + SGP4 + observer location; do not persist per-second pass geometry.
-- Do not let observer/pass errors stop Cesium rendering, selected-object tracking, or the point catalog.
-- Earth v0.5.7 and Camera v0.4.1 remain locked baselines while working on observer/SDR features.
+- Код наземной станции находится в `frontend/src/observer/`, отдельно от камеры и `EarthVisualController`.
+- Широта, долгота и высота наблюдателя — локальные данные браузера; не отправлять их в FastAPI только ради расчёта.
+- Геолокация требует разрешения, ручной ввод остаётся доступным.
+- Прогнозы вычисляются в Web Worker, а не в цикле отрисовки Cesium и не в UI-цикле React 1 Гц.
+- Горизонт прогноза по умолчанию — **60 минут**, маска возвышения выбирается пользователем.
+- AOS/TCA/LOS рассчитываются из OMM, SGP4 и координат наблюдателя; не сохранять ежесекундную геометрию пролётов.
+- Ошибка наблюдателя или прогнозов не должна останавливать глобус, слежение и каталог точек.
+- При изменениях в этой подсистеме сохранять базовые гарантии камеры и визуализации Земли.

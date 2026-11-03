@@ -1,18 +1,18 @@
-# SatGeoTracker v0.9.1 — Release verification
+# SatGeoTracker v0.9.1 — проверка релиза
 
-## User acceptance
+## Приёмка пользователем
 
-- [x] v0.8.8 confirmed stable by user.
-- [x] v0.9.0 features: Favorites / Graphite Glass / identity / pass drawer passed basic QA.
-- [x] v0.9.0 RC2: search and mobile layout fixes implemented and automated checks passed.
-- [x] v0.9.1: universal hover cards tested by user and accepted.
+- [x] v0.8.8 подтверждена пользователем как рабочая версия.
+- [x] v0.9.0 — основные функции избранного, Graphite Glass, фирменной символики и нижней ленты прошли QA.
+- [x] v0.9.0 RC2 — ранжирование поиска и мобильная компоновка исправлены; автоматические проверки пройдены.
+- [x] v0.9.1 — карточки наведения во всех режимах проверены пользователем и приняты.
 
-## Engineering validation
+## Технические проверки
 
-- [x] `npm run test:all` in this environment.
-- [x] TypeScript typecheck.
-- [ ] Windows production `npm run build` (not independently confirmed).
-- [ ] Browser DevTools Console, long session, Cesium Worker availability.
-- [ ] Independent SGP4 reference comparison with current OMM data.
+- [x] `npm run test:all` — выполнено 37/37 Frontend-тестов.
+- [x] Проверка типов TypeScript.
+- [ ] **Windows production-сборка** `npm run build` — успешный результат не подтверждён; ранее выявлена несовместимость WASM/Worker при сборке `satellite.js`.
+- [ ] Продолжительная браузерная сессия, DevTools Console и доступность Cesium Workers.
+- [ ] Независимая численная сверка SGP4 на актуальных OMM.
 
-This document distinguishes verified checks from outstanding work. It must not be used to claim unperformed tests as PASS.
+Этот документ **разделяет выполненные и открытые проверки**. Нельзя указывать статус PASS для тестов, которые фактически не проводились.

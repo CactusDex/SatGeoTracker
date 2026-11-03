@@ -1,26 +1,28 @@
-# SatGeoTracker v0.9.0 RC2 — QA checklist
+# SatGeoTracker v0.9.0 RC2 — чек-лист QA
 
-## Search / catalog
+Исторический чек-лист кандидата RC2. Результат его доработок включён в v0.9.1.
 
-1. Search `iss`: first match should be **ISS (ZARYA)**, NORAD **25544**.
-2. ISS (UNITY), ISS (ZVEZDA) must remain distinct with their original NORAD IDs.
-3. Lower relevance matches like SWISSCUBE can be listed after actual ISS names; no repeat of the same NORAD ID.
-4. Search `25544`: exact match is first. Search `WGS` and a partial satellite name.
-5. Switch between MAP, SDR, PASSES and verify search remains constrained to each workspace.
+## Поиск и каталог
 
-## Mobile panels (DevTools responsive mode)
+1. По запросу `iss` первой должна появиться **ISS (ZARYA)** с NORAD **25544**.
+2. ISS (UNITY) и ISS (ZVEZDA) должны оставаться отдельными объектами со своими NORAD ID.
+3. Менее релевантные варианты вроде SWISSCUBE могут отображаться ниже точных ISS-совпадений. Повторы одного NORAD ID не допускаются.
+4. Поиск `25544` должен возвращать точное совпадение первым. Проверьте также `WGS` и часть произвольного названия.
+5. Переключайтесь между **КАРТА**, **SDR** и **ПРОЛЁТЫ**: поиск должен учитывать фильтр текущего режима.
 
-1. Test 390x820, 520x820, 768x820 and 1920x1080.
-2. Configure observer and choose SDR, then PASSES.
-3. In both workspaces, the collapsed pass drawer should have the same height and cards should be equal in size.
-4. Expand/collapse both drawers. Additional information must scroll within the drawer.
-5. Confirm that the page itself does not grow a vertical scrollbar and the bottom-right gap stays filled.
+## Мобильные панели (адаптивный режим DevTools)
 
-## Regression / release gate
+1. Проверьте разрешения **390×820**, **520×820**, **768×820**, **1920×1080**.
+2. Задайте наблюдателя и поочерёдно выберите SDR и ПРОЛЁТЫ.
+3. В обоих режимах свёрнутая нижняя лента и карточки имеют одинаковую высоту.
+4. Раскройте/сверните обе ленты. Дополнительная информация прокручивается внутри контейнера.
+5. Вся страница не должна получать вертикальную прокрутку; пустой нижний правый участок отсутствует.
 
-1. Add/remove a favorite, reload, confirm persistence; temporarily unavailable entries stay saved.
-2. Check ISS, GPS and GEO tracking; FOV, observer marker, Orbit view, SDR and passes.
-3. Confirm logo/favicons and v0.9.0 RC2 label.
-4. Open F12 -> Console. No new Cesium Worker errors or uncaught rendering errors.
-5. From `frontend` run `npm run test:all`, `npm run check:cesium`, `npm run build` on Windows.
-6. Do not publish RC2 to GitHub `main` until browser and production-build checks pass.
+## Регрессия и критерии выпуска
+
+1. Добавьте и удалите спутник из избранного, обновите страницу, проверьте сохранение; недоступные объекты остаются в списке.
+2. Проверьте слежение ISS, GPS, GEO; FOV, маркер наблюдателя, пространственную орбиту, SDR и пролёты.
+3. Проверьте логотип, фавикон и **историческую метку v0.9.0 RC2**.
+4. Откройте `F12 → Console`: нет новых ошибок Cesium Workers или необработанных исключений отрисовки.
+5. В Windows из `frontend` выполните `npm run test:all`, `npm run check:cesium`, `npm run build`.
+6. На этапе RC2 нельзя было публиковать в `main` до браузерной проверки и проверки сборки. **Это историческое правило; позднее v0.9.1 была опубликована в main.**

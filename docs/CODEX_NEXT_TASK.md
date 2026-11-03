@@ -1,13 +1,13 @@
-# Archived task note
+# Архивная заметка о задачах
 
-This file is retained only to avoid deleting project history.
+Этот файл сохранён исключительно для истории проекта и не содержит актуального поручения.
 
-The earlier Codex handoff workflow is no longer active. SatGeoTracker v0.4 is being developed directly and the current source of truth is:
+Прежний процесс передачи задач через Codex больше не используется как основной источник требований. SatGeoTracker развивался дальше версии v0.4; текущую информацию следует искать в:
 
-- `README.md`
-- `AGENTS.md`
-- `docs/ARCHITECTURE.md`
-- `docs/CAMERA.md`
-- `docs/ROADMAP.md`
+- [README.md](../README.md)
+- [AGENTS.md](../AGENTS.md)
+- [Архитектуре](ARCHITECTURE.md)
+- [Камере](CAMERA.md)
+- [Плане развития](ROADMAP.md)
 
-Do not treat the old Codex task as an active implementation request.
+Не воспринимайте эту старую заметку как активную задачу разработки.

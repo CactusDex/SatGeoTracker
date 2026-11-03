@@ -1,21 +1,23 @@
-# SGT v0.9.0 RC3 — QA checklist
+# SatGeoTracker v0.9.0 RC3 — чек-лист QA
 
-## Common hover (mouse / trackpad)
+Историческая проверка RC3: универсальная карточка наведения из этой версии вошла в **v0.9.1**.
 
-1. MAP: hover a regular satellite dot. Card at upper left shows name, NORAD, orbit type, altitude and speed.
-2. MAP: hover ISS/Tiangong station icon. Verify the same card shows the STATION badge.
-3. SDR: hover a radio-enabled satellite. Same identity and telemetry plus frequency/mode/service, if catalog data exists.
-4. PASSES: hover an eligible satellite. Same identity and telemetry plus next calculated pass, if present.
-5. When observer configured, elevation is displayed; without observer there is no bogus value.
-6. Move the pointer into empty space: tooltip disappears. Moving between satellites updates it. No click is necessary and the camera does not follow.
-7. Hover an already selected satellite: tooltip still works; right inspector remains unchanged.
-8. Switch workspaces; no stale tooltip and hover only for visible targets.
-9. At narrow widths and on touchscreens there is no floating hover card; tap to select remains available.
+## Карточка наведения (мышь / тачпад)
 
-## Regression
+1. **КАРТА:** наведите указатель на обычную точку спутника. Слева вверху должны быть название, NORAD ID, тип орбиты, высота и скорость.
+2. **КАРТА:** наведите указатель на значок ISS/Tiangong; должна появиться та же карточка с меткой **СТАНЦИЯ**.
+3. **SDR:** наведите на спутник с радиоканалом. Показывается стандартная информация плюс частота/режим/служба, если она есть в каталоге.
+4. **ПРОЛЁТЫ:** наведите на подходящий объект; добавляется ближайший рассчитанный пролёт, если найден.
+5. При заданном наблюдателе отображается угол места. Без наблюдателя фиктивное значение показывать нельзя.
+6. Уведите указатель в пустую область: карточка исчезает. Перемещение между спутниками меняет сведения без клика и без перехода камеры.
+7. Наведение на уже выбранный объект работает; правый инспектор не изменяется.
+8. При переключении режима не остаётся устаревшей карточки, наведение доступно только для видимых объектов.
+9. На узком экране и сенсорных устройствах плавающая карточка не мешает; выбор нажатием продолжает работать.
 
-1. Favorites persistence, quick focus and removal.
-2. LEO/MEO/GEO orbits, FOV / camera, Cesium Workers, ISS 3D model.
-3. Pass drawer, Graphite Glass, logo and browser favicon.
-4. Test from `frontend`: `npm run test:all`, `npm run check:cesium`, `npm run build` on Windows.
-5. Inspect DevTools Console for new errors, and confirm v0.9.0 RC3 label.
+## Регрессия
+
+1. Сохранение избранного, быстрый переход и удаление.
+2. Орбиты LEO/MEO/GEO, камера/FOV, Cesium Workers и модель МКС.
+3. Лента пролётов, Graphite Glass, логотип и фавикон.
+4. Из `frontend`: `npm run test:all`, `npm run check:cesium`, `npm run build` на Windows.
+5. Проверка новых ошибок в DevTools Console. Историческая метка сборки — **v0.9.0 RC3**; в актуальной v0.9.1 она заменена.
