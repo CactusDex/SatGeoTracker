@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-label="SatGeoTracker: satellite orbit around Earth, 3D tracking, radio and pass prediction">
-  <title>SatGeoTracker — Explore the space above us</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-label="SatGeoTracker: спутники на орбите Земли, 3D-трекинг, радиоданные, прогноз пролётов">
+  <title>SatGeoTracker — Исследуй орбиты Земли</title>
   <defs>
     <clipPath id="frame"><rect width="1200" height="450" rx="22"/></clipPath>
     <clipPath id="planet"><circle cx="902" cy="233" r="154"/></clipPath>
@@ -11,17 +11,17 @@
       <circle cx="704" cy="78" r="1.4"/><circle cx="774" cy="355" r="1.4"/><circle cx="1141" cy="132" r="1.3"/><circle cx="682" cy="274" r="1.1"/><circle cx="1066" cy="391" r="1.3"/><circle cx="1163" cy="328" r="1.2"/><circle cx="648" cy="175" r="1.1"/><circle cx="735" cy="405" r="1.3"/><circle cx="1008" cy="38" r="1.2"/>
     </g>
     <rect x="58" y="66" width="6" height="30" rx="3" fill="#E7B960"/>
-    <text x="82" y="89" fill="#E7B960" font-size="15" font-family="Segoe UI,Arial,sans-serif" letter-spacing="4" font-weight="700">EARTH / ORBITS / SIGNALS</text>
+    <text x="82" y="89" fill="#E7B960" font-size="15" font-family="Segoe UI,Arial,sans-serif" letter-spacing="4" font-weight="700">ЗЕМЛЯ / ОРБИТЫ / СИГНАЛЫ</text>
     <text x="58" y="170" fill="#EDF3F7" font-size="57" font-family="Segoe UI,Arial,sans-serif" font-weight="750" letter-spacing="-1.7">SatGeoTracker</text>
-    <text x="61" y="214" fill="#AFC0CC" font-size="23" font-family="Segoe UI,Arial,sans-serif">Explore the space above us.</text>
-    <text x="61" y="267" fill="#8495A2" font-size="17" font-family="Segoe UI,Arial,sans-serif">Live orbital data · 3D Earth · Satellite passes</text>
-    <text x="61" y="297" fill="#8495A2" font-size="17" font-family="Segoe UI,Arial,sans-serif">Radio context · Local-first workflow</text>
+    <text x="61" y="214" fill="#AFC0CC" font-size="23" font-family="Segoe UI,Arial,sans-serif">Исследуй орбиты Земли.</text>
+    <text x="61" y="267" fill="#8495A2" font-size="17" font-family="Segoe UI,Arial,sans-serif">Орбитальные данные · 3D-глобус · Пролёты</text>
+    <text x="61" y="297" fill="#8495A2" font-size="17" font-family="Segoe UI,Arial,sans-serif">Радиочастоты · Локальный запуск</text>
     <rect x="58" y="345" width="120" height="39" rx="8" fill="#20272E" stroke="#3A454F"/>
     <rect x="191" y="345" width="120" height="39" rx="8" fill="#20272E" stroke="#3A454F"/>
     <rect x="324" y="345" width="120" height="39" rx="8" fill="#20272E" stroke="#3A454F"/>
-    <text x="118" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">MAP</text>
+    <text x="118" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">КАРТА</text>
     <text x="251" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">SDR</text>
-    <text x="384" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">PASSES</text>
+    <text x="384" y="370" text-anchor="middle" fill="#E2EAF1" font-size="12" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing=".4">ПРОЛЁТЫ</text>
     <circle cx="902" cy="233" r="154" fill="#173942"/>
     <g clip-path="url(#planet)">
       <path d="M747 208Q825 158 883 170T1054 174V82H748Z" fill="#215568"/>
@@ -35,6 +35,6 @@
     <circle cx="1073" cy="128" r="8" fill="#E7B960" stroke="#101419" stroke-width="4"/>
     <circle cx="760" cy="311" r="4" fill="#DDEAF1"/>
     <text x="1098" y="117" fill="#E7B960" font-size="13" font-family="Segoe UI,Arial,sans-serif" letter-spacing="1">SGP4</text>
-    <text x="993" y="414" fill="#8596A3" font-size="11" font-family="Segoe UI,Arial,sans-serif" letter-spacing="2">ORBITAL VIEW</text>
+    <text x="993" y="414" fill="#8596A3" font-size="11" font-family="Segoe UI,Arial,sans-serif" letter-spacing="2">ОРБИТАЛЬНЫЙ ВИД</text>
   </g>
 </svg>

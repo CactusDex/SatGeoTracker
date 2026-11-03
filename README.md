@@ -1,50 +1,51 @@
 <div align="center">
 
-<img src="frontend/public/brand/logo-mark.svg" alt="SatGeoTracker orbit logo" width="98" />
+<img src="frontend/public/brand/logo-mark.svg" alt="Логотип SatGeoTracker" width="98" />
 
 # SatGeoTracker
 
-**Explore the space above us.**
+**Исследуй орбиты Земли.**
 
-A local-first 3D satellite tracker combining orbital mechanics, ground-pass predictions, and radio data in one workspace.
+Интерактивный 3D-трекер спутников с прогнозированием пролётов, радиоданными и визуализацией орбит.
 
 <p>
-  <img alt="Version 0.9.1" src="https://img.shields.io/badge/version-v0.9.1-E7B960?style=flat-square&amp;labelColor=151A20" />
-  <img alt="Local-first" src="https://img.shields.io/badge/platform-local--first-647785?style=flat-square&amp;labelColor=151A20" />
-  <img alt="React + CesiumJS" src="https://img.shields.io/badge/visualization-React%20%2B%20CesiumJS-647785?style=flat-square&amp;labelColor=151A20" />
-  <img alt="Frontend tests: 37 passed" src="https://img.shields.io/badge/tests-37%20passing-528B75?style=flat-square&amp;labelColor=151A20" />
+  <img alt="Версия v0.9.1" src="https://img.shields.io/badge/%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F-v0.9.1-E7B960?style=flat-square&amp;labelColor=151A20" />
+  <img alt="Платформа Windows" src="https://img.shields.io/badge/%D0%BF%D0%BB%D0%B0%D1%82%D1%84%D0%BE%D1%80%D0%BC%D0%B0-Windows-647785?style=flat-square&amp;labelColor=151A20" />
+  <img alt="Тесты 37 из 37" src="https://img.shields.io/badge/%D1%82%D0%B5%D1%81%D1%82%D1%8B-37%20%D0%B8%D0%B7%2037-528B75?style=flat-square&amp;labelColor=151A20" />
 </p>
 
-<img src="docs/assets/branding/showcase.svg" alt="SatGeoTracker branded orbital illustration" width="100%" />
+<img src="docs/assets/branding/showcase.svg" alt="SatGeoTracker: Земля и орбиты спутников" width="100%" />
 
-**[Features](#features) · [Quick start](#quick-start) · [Architecture](#architecture) · [Roadmap](docs/ROADMAP.md) · [Changelog](CHANGELOG.md)**
+**[Возможности](#возможности) · [Быстрый запуск](#быстрый-запуск) · [Архитектура](#архитектура) · [План развития](docs/ROADMAP.md) · [История изменений](CHANGELOG.md)**
 
 </div>
 
-## Overview
+## О проекте
 
-SatGeoTracker is an interactive Earth-orbit visualization project. It retrieves real orbital elements from **CelesTrak**, computes satellite positions with **SGP4**, and renders them on a **CesiumJS 3D globe**. The same interface also provides an observer-based pass predictor and satellite transmitter metadata from **SatNOGS**.
+**SatGeoTracker (SGT)** — веб-приложение для исследования искусственных спутников Земли на интерактивном 3D-глобусе. Оно получает орбитальные элементы из **CelesTrak**, рассчитывает положения по модели **SGP4** и отображает их с помощью **CesiumJS**.
 
-Designed for local use, exploration, and learning — **not a live spacecraft telemetry feed**.
+В приложении объединены отслеживание спутников, точка наземного наблюдения, прогнозы пролётов и справочник передатчиков **SatNOGS DB**. Проект предназначен прежде всего для локального запуска, обучения и исследования.
 
-## Features
+> Координаты вычисляются по орбитальным элементам, а не поступают напрямую с борта спутников. Точность зависит от актуальности исходных данных.
 
-| Workspace | What you can do |
+## Возможности
+
+| Режим | Функции |
 | --- | --- |
-| **MAP** | Explore the 3D globe, search by name or NORAD ID, filter LEO/MEO/GEO objects, inspect orbital paths, and follow satellites with the camera. |
-| **SDR** | Explore SatNOGS transmitter records, filter radio-capable satellites, view downlink frequencies and estimated Doppler-corrected RX frequencies. |
-| **PASSES** | Set a ground observer, calculate upcoming passes with AOS/TCA/LOS, elevation and azimuth, and focus on selected events. |
+| **КАРТА** | 3D-глобус, поиск по названию и NORAD ID, фильтры LEO/MEO/GEO, орбитальные траектории и слежение камерой. |
+| **SDR** | Каталог спутниковых радиоканалов SatNOGS, фильтры частот, данные о передатчиках и оценка доплеровской поправки. |
+| **ПРОЛЁТЫ** | Наземный наблюдатель, расчёт AOS/TCA/LOS, угла места, азимута и ближайших пролётов. |
 
-**Across all modes**
+**Доступно во всех режимах:**
 
-- **Universal satellite hover** — a lightweight read-only card with object name, NORAD ID, orbit class, altitude, speed, and relevant mode-specific information.
-- **Favorites** — save objects by NORAD ID, search the list, and jump back to them. Stored locally in your browser; temporarily unavailable catalog entries are retained.
-- **Tracking and visualization** — camera follow mode, orbital path rendering, an ISS 3D model, station markers, and an adjustable field of view.
-- **Graphite Glass interface** — compact technical panels, responsive SDR/pass layouts, amber satellite markers, and custom project branding.
+- **Карточка наведения.** Название, NORAD ID, класс орбиты, высота и скорость спутника без изменения положения камеры; дополнительные сведения зависят от режима.
+- **Избранное.** Сохранение объектов по NORAD ID, поиск, быстрый переход и хранение списка в браузере.
+- **Камера и 3D.** Сопровождение спутника, траектории, модель МКС, отдельные маркеры станций, настройка угла обзора.
+- **Graphite Glass.** Компактный графитовый интерфейс, янтарные маркеры, адаптивные панели и оригинальный логотип.
 
-## Quick start
+## Быстрый запуск
 
-**Requirements:** Windows, Node.js/npm, Python 3, and an internet connection for initial dependency installation and current external data.
+**Требования:** Windows, Node.js с npm, Python 3. Для установки зависимостей и получения данных нужен интернет.
 
 ```powershell
 git clone https://github.com/CactusDex/SatGeoTracker.git
@@ -53,36 +54,36 @@ cd SatGeoTracker
 .\dev.cmd
 ```
 
-Open **http://127.0.0.1:5173/**. The API runs at **http://127.0.0.1:8000/**.
+После запуска открой **http://127.0.0.1:5173/**. API доступен на **http://127.0.0.1:8000/**.
 
-Use `stop-dev.cmd` to stop the local services. For detailed setup and troubleshooting, see [Development](docs/DEVELOPMENT.md).
+Для остановки используй `stop-dev.cmd`. Подробнее — в [документации по запуску](docs/DEVELOPMENT.md).
 
-## Architecture
+## Архитектура
 
 ```text
 CelesTrak OMM ──┐
-                ├── FastAPI + local cache ── React / TypeScript
-SatNOGS DB ─────┘                               │
-                                             SGP4
-                                               │
-                                    CesiumJS 3D Earth
-                                               │
-                            Tracking · Observer passes · SDR
+                ├── FastAPI и кеш ── React / TypeScript
+SatNOGS DB ─────┘                         │
+                                       SGP4
+                                         │
+                                     CesiumJS
+                                         │
+                             Карта · Пролёты · SDR
 ```
 
-| Layer | Technology |
+| Подсистема | Технологии |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite |
-| Globe and imagery | CesiumJS |
-| Propagation | satellite.js / SGP4 |
-| API and caching | Python, FastAPI |
-| Orbital elements | CelesTrak GP / OMM |
-| Radio metadata | SatNOGS DB |
-| ISS 3D asset | NASA |
+| Интерфейс | React 19, TypeScript, Vite |
+| Визуализация Земли | CesiumJS |
+| Расчёт орбит | satellite.js / SGP4 |
+| API и кеш | Python, FastAPI |
+| Орбитальные элементы | CelesTrak GP / OMM |
+| Радиоданные | SatNOGS DB |
+| 3D-модель МКС | NASA |
 
-The project does not require a database for the current workflow. Favorites and observer settings are browser-local; the backend caches external data.
+Отдельная база данных не требуется: избранное и координаты наблюдателя хранятся в браузере, а сервер кеширует внешние данные.
 
-## Development and validation
+## Проверки и ограничения
 
 ```powershell
 cd frontend
@@ -90,26 +91,25 @@ npm run test:all
 npm run check:cesium
 ```
 
-The v0.9.1 frontend test suite has **37 passing tests**. Local interactive use has been accepted in the browser.
+Для v0.9.1 **37 из 37 Frontend-тестов пройдены**; основные функции проверены в браузере.
 
-**Current limitations:** The production `npm run build` has encountered a `satellite.js` WASM / Vite Worker bundling incompatibility on Windows. The repository includes an ES-module Worker configuration, but a successful production build is not yet confirmed. Independent numerical checks of fresh orbital elements also remain on the roadmap. These are distinct from the working local development flow.
+**Известное ограничение:** production-сборка `npm run build` на Windows ранее завершалась ошибкой совместимости `satellite.js` (WASM) и сборщика Vite Worker. В репозитории настроен формат ES-модулей для Workers, но успешная сборка пока не подтверждена. Независимая численная сверка SGP4 также запланирована.
 
-## Roadmap and documentation
+## Документация
 
-- [Roadmap](docs/ROADMAP.md) — completed milestones and next work
-- [Changelog](CHANGELOG.md) — version history
-- [Architecture](docs/ARCHITECTURE.md) · [Development](docs/DEVELOPMENT.md)
-- [Observer and passes](docs/OBSERVER_PASSES.md) · [3D models](docs/MODELS.md)
-- [Independent numerical audit](scripts/INDEPENDENT_AUDIT.md)
+- [План развития](docs/ROADMAP.md) и [история изменений](CHANGELOG.md)
+- [Архитектура](docs/ARCHITECTURE.md) · [Разработка](docs/DEVELOPMENT.md)
+- [Наблюдатель и пролёты](docs/OBSERVER_PASSES.md) · [3D-модели](docs/MODELS.md)
+- [Независимая проверка расчётов](scripts/INDEPENDENT_AUDIT.md)
 
-## Credits
+## Автор и источники
 
-Built by **[Cactus Dex](https://github.com/CactusDex)**.
+**Автор — [Cactus Dex](https://github.com/CactusDex).**
 
-Orbital elements: [CelesTrak](https://celestrak.org/) · Radio data: [SatNOGS](https://db.satnogs.org/) · ISS 3D resources: [NASA](https://science.nasa.gov/3d-resources/).
+Данные: [CelesTrak](https://celestrak.org/) (орбиты), [SatNOGS DB](https://db.satnogs.org/) (радиоканалы), [NASA](https://science.nasa.gov/3d-resources/) (3D-ресурсы МКС).
 
-Satellite positions and passes are calculated from published orbital elements and may vary with element age, perturbations, and observer settings. Listed transmitter records do not guarantee radio reception.
+Расчётные траектории зависят от актуальности элементов орбиты. Наличие частоты в справочнике не гарантирует приём радиосигнала.
 
 ---
 
-<div align="center"><sub>SatGeoTracker · Earth / Orbits / Signals · v0.9.1</sub></div>
+<div align="center"><sub>SatGeoTracker · Земля / Орбиты / Сигналы · v0.9.1</sub></div>
