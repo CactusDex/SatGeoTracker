@@ -14,6 +14,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as satellite from "satellite.js";
 
 import { loadSatellites } from "./api";
+import { useSatelliteMedia } from "./media/useSatelliteMedia";
+import { SatelliteThumbnail } from "./media/SatelliteThumbnail";
 import { searchSatellites } from "./search/satelliteSearch";
 import { formatHoverAltitude, formatHoverSpeed } from "./hover/hoverFormat";
 import { useFavorites } from "./favorites/useFavorites";
@@ -119,6 +121,9 @@ export default function App() {
     () => satellites.find((sat) => sat.noradId === hoveredId) ?? null,
     [satellites, hoveredId]
   );
+
+  // Media is independent of MAP/SDR/PASSES; fetch only for a visible inspector.
+  const selectedMedia = useSatelliteMedia(panelVisible ? selected?.noradId ?? null : null);
 
   const activePassNorads = useMemo(() => {
     const nowMs = clock.getTime();
@@ -782,7 +787,7 @@ export default function App() {
         <div className="brand" aria-label="SatGeoTracker">
           <img className="brand-icon" src="/brand/logo-mark.svg" width="34" height="34" alt="" />
           <span className="brand-name">SatGeoTracker</span>
-          <span className="brand-version">v0.9.1</span>
+          <span className="brand-version">v0.9.2</span>
         </div>
 
         <nav className="mode-switch" aria-label="Режим работы">
@@ -1074,8 +1079,10 @@ export default function App() {
                 </button>
               </div>
             </div>
-            <h1>{selected.name}</h1>
-            <div className="inspector-object-flags">
+            <div className="inspector-object-header">
+              <div className="inspector-object-identity">
+                <h1>{selected.name}</h1>
+                <div className="inspector-object-flags">
               <div className="orbit-pill">{selected.orbitType}</div>
               {isSpaceStation(selected.noradId, selected.name) && (
                 <span className="station-pill">СТАНЦИЯ</span>
@@ -1092,6 +1099,9 @@ export default function App() {
                 <span aria-hidden="true">{favoriteIds.has(selected.noradId) ? "★" : "☆"}</span>
                 <span>{favoriteIds.has(selected.noradId) ? "В ИЗБРАННОМ" : "В ИЗБРАННОЕ"}</span>
               </button>
+                </div>
+              </div>
+              <SatelliteThumbnail key={selected.noradId} media={selectedMedia?.norad_id === selected.noradId ? selectedMedia : null} name={selected.name} />
             </div>
 
             {modelStatus?.noradId === selected.noradId && (
