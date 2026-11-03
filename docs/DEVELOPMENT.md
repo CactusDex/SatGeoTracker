@@ -1,71 +1,73 @@
-# Local development
+# Локальная разработка SatGeoTracker
 
-## Supported local workflow
+## Поддерживаемая среда
 
-The project currently targets Windows development.
+Основной сценарий разработки — **Windows**, Node.js/npm, Python 3. Для первого запуска и обновления внешних данных требуется интернет.
 
-### First time
+### Первичная установка
+
+Из корня репозитория:
 
 ```powershell
 .\setup.cmd
 ```
 
-### Start everything
+### Запуск приложения
 
 ```powershell
 .\dev.cmd
 ```
 
-The launcher:
+Скрипт запуска:
 
-1. checks required installed dependencies;
-2. runs setup automatically if `.venv`, Vite, or Cesium runtime assets are missing;
-3. stops old SGT processes recorded in `.run/`;
-4. starts FastAPI and Vite in separate PowerShell windows;
-5. waits for both services;
-6. opens `http://127.0.0.1:5173/`.
+1. Проверяет необходимые зависимости.
+2. При отсутствии `.venv`, Vite или ресурсов Cesium автоматически запускает установку.
+3. Останавливает старые процессы SGT, сохранённые в `.run/`.
+4. Запускает FastAPI и Vite в отдельных окнах PowerShell.
+5. Дожидается запуска обоих сервисов.
+6. Открывает `http://127.0.0.1:5173/`.
 
-### Stop
+### Остановка
 
 ```powershell
 .\stop-dev.cmd
 ```
 
-## Why Node can work even when `node` is not in PATH
+## Поиск Node.js без PATH
 
-The scripts explicitly check:
+Скрипты проверяют стандартные пути установки:
 
 ```text
 C:\Program Files\nodejs\node.exe
 C:\Program Files\nodejs\npm.cmd
 ```
 
-so the project does not depend on a freshly restarted shell after Node installation.
+Поэтому после установки Node.js иногда не требуется перезапуск PowerShell, даже если `node` пока отсутствует в `PATH`.
 
-## Ports
+## Порты
 
-Fixed development ports:
+| Порт | Назначение |
+| --- | --- |
+| `5173` | Интерфейс Vite |
+| `8000` | Backend FastAPI |
 
-- `5173` — Vite frontend.
-- `8000` — FastAPI backend.
+Для Vite установлен `strictPort`: при занятом порте приложение **не перейдёт автоматически на 5174**, чтобы не нарушать адреса и настройки прокси.
 
-Vite uses `strictPort`, so it does not silently move to 5174 and break assumptions.
+## Проверка CelesTrak
 
-## CelesTrak debugging
-
-Check backend health:
+Состояние backend:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/health
 ```
 
-Check satellite endpoint directly:
+Получение каталога напрямую:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/satellites
 ```
 
-If the large ACTIVE query fails, test the full pipeline with ISS:
+Если запрос большого набора ACTIVE не выполняется, можно временно проверить полный путь обработки только на МКС:
 
 ```powershell
 $env:CELESTRAK_URL="https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON"
@@ -73,41 +75,46 @@ $env:CELESTRAK_URL="https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORM
 .\dev.cmd
 ```
 
-## Typical error meanings
+Это диагностическая настройка для текущего сеанса PowerShell, а не постоянная смена источника.
 
-### `ERR_CONNECTION_REFUSED :5173`
+## Типичные ошибки
 
-Vite is not running.
+**`ERR_CONNECTION_REFUSED :5173`** — сервер Vite не запущен.
 
-### Vite says `Port 5173 is in use`
+**`Port 5173 is in use`** — порт занят. Сначала запусти `stop-dev.cmd`; если порт принадлежит другому приложению, выясни какому, прежде чем завершать процесс.
 
-Run:
+**`Backend is unavailable`** — FastAPI не запущен либо прокси Vite не может подключиться к порту 8000.
 
-```powershell
-.\stop-dev.cmd
-```
+**`Backend HTTP 502`** — соединение Frontend–Backend работает, но возникла ошибка внешнего CelesTrak или пришедших данных. Проверь диагностический ответ FastAPI.
 
-If another unrelated program owns 5173, identify it before terminating it.
+## Общий кеш CelesTrak
 
-### UI says `Backend is unavailable`
-
-FastAPI did not start or Vite proxy cannot reach port 8000.
-
-### UI says `Backend HTTP 502`
-
-Frontend and backend are connected; the problem is now upstream CelesTrak or its payload. Inspect the detailed message returned by FastAPI.
-
-
-## Shared CelesTrak cache
-
-Camera/project version upgrades no longer require a new ACTIVE download. On Windows the cache is stored at:
+При обновлении версии проекта повторно загружать ACTIVE необязательно. В Windows кеш хранится по адресу:
 
 ```text
 %LOCALAPPDATA%\SatGeoTracker\cache\celestrak-active.json
 ```
 
-`/health` reports the resolved `cache_path`. A legacy `backend/.cache/celestrak-active.json` is copied into the shared location automatically when present.
+Реальный путь можно посмотреть в поле `cache_path` ответа `/health`. Файл старого кеша `backend/.cache/celestrak-active.json` переносится автоматически, если существует.
 
-## Camera v0.4 debugging
+## Проверка камеры
 
-Press `F8` in the viewer to show/hide camera mode, target, heading, pitch, range, and controller ownership.
+`F8` в 3D-просмотрщике включает отладочную информацию: режим камеры, цель, азимут направления (`heading`), угол (`pitch`), дальность (`range`) и владельца управления.
+
+## Автоматические проверки
+
+После установки зависимостей:
+
+```powershell
+cd frontend
+npm run test:all
+npm run check:cesium
+```
+
+Сборка production-версии:
+
+```powershell
+npm run build
+```
+
+**Ограничение v0.9.1:** тесты и локальный режим работают, но успешная production-сборка на Windows не подтверждена. Ранее возникала ошибка сборки Worker при использовании WASM из `satellite.js`. Настройка `worker.format = "es"` уже добавлена в `vite.config.ts`, но её эффект требуется проверить отдельно. Если сборка не проходит, это не означает автоматическую неисправность режима `dev.cmd`.
