@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-label="SatGeoTracker: satellite orbit around Earth, 3D tracking, radio and pass prediction">
+  <title>SatGeoTracker — Explore the space above us</title>
+  <defs>
+    <clipPath id="frame"><rect width="1200" height="450" rx="22"/></clipPath>
+    <clipPath id="planet"><circle cx="902" cy="233" r="154"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="450" fill="#101419"/>
+    <rect x="22" y="22" width="1156" height="406" rx="15" fill="none" stroke="#303943"/>
+    <g opacity=".45" fill="#DDEAF1">
+      <circle cx="704" cy="78" r="1.4"/><circle cx="774" cy="355" r="1.4"/><circle cx="1141" cy="132" r="1.3"/><circle cx="682" cy="274" r="1.1"/><circle cx="1066" cy="391" r="1.3"/><circle cx="1163" cy="328" r="1.2"/><circle cx="648" cy="175" r="1.1"/><circle cx="735" cy="405" r="1.3"/><circle cx="1008" cy="38" r="1.2"/>
+    </g>
+    <rect x="58" y="66" width="6" height="30" rx="3" fill="#E7B960"/>
+    <text x="82" y="89" fill="#E7B960" font-size="15" font-family="Segoe UI,Arial,sans-serif" letter-spacing="4" font-weight="700">EARTH / ORBITS / SIGNALS</text>
+    <text x="58" y="170" fill="#EDF3F7" font-size="57" font-family="Segoe UI,Arial,sans-serif" font-weight="750" letter-spacing="-1.7">SatGeoTracker</text>
+    <text x="61" y="214" fill="#AFC0CC" font-size="23" font-family="Segoe UI,Arial,sans-serif">Explore the space above us.</text>
+    <text x="61" y="267" fill="#8495A2" font-size="17" font-family="Segoe UI,Arial,sans-serif">Live orbital data · 3D Earth · Satellite passes</text>
+    <text x="61" y="297" fill="#8495A2" font-size="17" font-family="Segoe UI,Arial,sans-serif">Radio context · Local-first workflow</text>
+    <rect x="58" y="345" width="120" height="39" rx="8" fill="#20272E" stroke="#3A454F"/>
+    <rect x="191" y="345" width="120" height="39" rx="8" fill="#20272E" stroke="#3A454F"/>
+    <rect x="324" y="345" width="120" height="39" rx="8" fill="#20272E" stroke="#3A454F"/>
+    <text x="118" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">MAP</text>
+    <text x="251" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">SDR</text>
+    <text x="384" y="370" text-anchor="middle" fill="#E2EAF1" font-size="14" font-family="Segoe UI,Arial,sans-serif" font-weight="700" letter-spacing="1.2">PASSES</text>
+    <circle cx="902" cy="233" r="154" fill="#173942"/>
+    <g clip-path="url(#planet)">
+      <path d="M747 208Q825 158 883 170T1054 174V82H748Z" fill="#215568"/>
+      <path d="M774 152L817 121 864 123 876 150 856 184 819 187 800 211 770 193ZM908 159L964 139 994 171 973 193 992 222 970 259 935 260 919 229 887 203Z" fill="#3D6B5D"/>
+      <path d="M810 246L848 230 879 252 873 284 851 301 844 347 812 335 805 295 783 275ZM957 287L1008 267 1044 302 1024 359 973 365 945 335Z" fill="#3D6B5D"/>
+      <path d="M769 212Q882 279 1050 213M756 280Q873 349 1050 280" fill="none" stroke="#75B2BE" stroke-opacity=".18" stroke-width="2"/>
+    </g>
+    <circle cx="902" cy="233" r="154" fill="none" stroke="#89C8D4" stroke-width="2"/>
+    <ellipse cx="902" cy="233" rx="225" ry="75" transform="rotate(-27 902 233)" fill="none" stroke="#E7B960" stroke-width="3"/>
+    <ellipse cx="902" cy="233" rx="193" ry="106" transform="rotate(38 902 233)" fill="none" stroke="#6C8894" stroke-opacity=".5" stroke-width="2" stroke-dasharray="8 9"/>
+    <circle cx="1073" cy="128" r="8" fill="#E7B960" stroke="#101419" stroke-width="4"/>
+    <circle cx="760" cy="311" r="4" fill="#DDEAF1"/>
+    <text x="1098" y="117" fill="#E7B960" font-size="13" font-family="Segoe UI,Arial,sans-serif" letter-spacing="1">SGP4</text>
+    <text x="993" y="414" fill="#8596A3" font-size="11" font-family="Segoe UI,Arial,sans-serif" letter-spacing="2">ORBITAL VIEW</text>
+  </g>
+</svg>
