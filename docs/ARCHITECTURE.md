@@ -1,103 +1,76 @@
-# SatGeoTracker architecture — v0.4
+# Архитектура SatGeoTracker
 
-## Runtime data flow
+Документ описывает основные потоки данных и технические решения проекта. Нумерация версий отдельных подсистем (`v0.4`, `v0.7`, `v0.8.7`) относится к моменту их внедрения; актуальная версия приложения — **v0.9.1**.
+
+## Поток орбитальных данных
 
 ```text
 CelesTrak GP / OMM JSON
           ↓
        FastAPI
           ↓
- shared 2-hour disk cache
+Общий дисковый кеш (2 часа)
           ↓
     GET /api/satellites
           ↓
- Vite development proxy
+   Прокси Vite /api
           ↓
  React + satellite.js
           ↓
- OMM -> SatRec -> SGP4
+ OMM → SatRec → SGP4
           ↓
- ECI position / velocity
+Положение / скорость в ECI
           ↓
- geodetic conversion
+Геодезические координаты
           ↓
  Cesium Cartesian3
           ↓
  PointPrimitiveCollection
 ```
 
-## Camera data flow
+CelesTrak предоставляет **орбитальные элементы**, а не непрерывный поток координат спутников. Положение вычисляется для конкретного момента UTC.
+
+## Данные для системы камеры
 
 ```text
-all satellites                    selected satellite
-     |                                   |
-  ~1 Hz SGP4                      render-frame SGP4
-     |                                   |
-PointPrimitive                     one shared sample
-                                         |
-                               +---------+---------+
-                               |                   |
-                       selected PointPrimitive  CameraManager
-                                                   |
-                                      target + heading + pitch + range
+Все спутники                     Выбранный спутник
+     │                                  │
+ SGP4 ~1 Гц                      SGP4 каждый кадр
+     │                                  │
+PointPrimitive                   Общий расчёт положения
+                                        │
+                             ┌──────────┴──────────┐
+                             ▼                     ▼
+                      Маркер выбранного       CameraManager
+                         спутника                   │
+                                   цель + heading + pitch + range
 ```
 
-The selected object is intentionally removed from the slow point-update ownership while it is tracked. This prevents two loops from writing different target positions.
+При слежении выбранный спутник исключается из обычного цикла обновления точек. Это исключает конфликт между медленным обновлением глобального каталога и покадровым слежением.
 
-## Camera ownership
+### Управление камерой
 
-```text
-EARTH
-  Cesium native ScreenSpaceCameraController owns camera input
+| Состояние | Кто управляет камерой |
+| --- | --- |
+| `EARTH` | Встроенный `ScreenSpaceCameraController` Cesium |
+| `TRANSITION` | Ввод отключён, перемещением управляет анимация Cesium |
+| `SATELLITE` | Встроенный ввод отключён, камерой управляет `CameraManager` |
 
-TRANSITION
-  camera input disabled; Cesium flight owns camera
+Одновременное управление одной камерой из двух контроллеров запрещено.
 
-SATELLITE
-  Cesium native input disabled; CameraManager owns camera
-```
+## Ответственность компонентов
 
-No two camera controllers are allowed to mutate the camera simultaneously.
+**CelesTrak** — источник элементов орбит.
 
-## Responsibilities
+**FastAPI** — запросы к внешним источникам, общий кеш, перенос старого кеша, резервная выдача устаревшего кеша при сбое источника. Синхронизация с БД и дополнительное обогащение SATCAT — исторически рассматривавшиеся расширения, **не обязательные для текущего MVP**.
 
-### CelesTrak
+**satellite.js** — обработка OMM, расчёт SGP4, получение положения и скорости на заданный момент UTC, преобразование координат.
 
-Provides orbital elements, not a real-time geographic-coordinate stream.
+**CesiumJS** — 3D-глобус, примитивы и определение объектов по указателю, пространственная орбита, визуализация и управление камерой в режиме Земли.
 
-### FastAPI
+**CameraManager** — автомат состояний `EARTH | TRANSITION | SATELLITE`, удержание цели, управление камерой вокруг спутника, покадровый callback, плавное изменение дальности/углов, освобождение ресурсов и отладочные данные.
 
-- upstream fetch;
-- shared cache;
-- legacy-cache migration;
-- stale-cache fallback;
-- future OMM + SATCAT enrichment;
-- future DB synchronization.
-
-### satellite.js
-
-- OMM parsing;
-- SGP4 propagation;
-- position and velocity at supplied UTC timestamps;
-- coordinate-system conversions.
-
-### CesiumJS
-
-- globe;
-- primitive rendering/picking;
-- orbit polyline;
-- camera rendering and native Earth navigation.
-
-### CameraManager
-
-- `EARTH | TRANSITION | SATELLITE` state machine;
-- satellite target ownership;
-- custom satellite orbit input;
-- per-frame selected-object propagation callback;
-- smooth range/angle interpolation;
-- cleanup/debug state.
-
-## Cache location
+## Хранилище кеша
 
 Windows:
 
@@ -105,73 +78,63 @@ Windows:
 %LOCALAPPDATA%\SatGeoTracker\cache\celestrak-active.json
 ```
 
-Fallback:
+Резервный путь для других систем:
 
 ```text
 ~/.cache/satgeotracker/celestrak-active.json
 ```
 
-A legacy `backend/.cache/celestrak-active.json` is migrated automatically when available.
+При обнаружении старый `backend/.cache/celestrak-active.json` автоматически переносится в общий каталог.
 
-## Performance direction
+## Производительность
 
-Bulk SGP4 still runs on the main browser thread in the current MVP. Next performance milestone:
-
-```text
-React/UI thread
-     ↕ messages
-Web Worker
-     ↓
-SGP4 for all active satellites
-```
-
-The selected object remains cheap enough to propagate every rendered frame independently.
-
-## Observer / pass subsystem v0.7.0
+Массовый расчёт SGP4 в текущем MVP остаётся в основном потоке браузера. Возможное направление оптимизации:
 
 ```text
-Browser geolocation or manual coordinates
-                 │
-                 ▼
-        ObserverLocation (local only)
-                 │
-        ┌────────┴────────┐
-        │                 │
-        ▼                 ▼
-selected satellite     pass worker
-1 Hz/UI sample         ACTIVE OMM catalog
-        │                 │
-        ▼                 ▼
- az/el/range          AOS/TCA/LOS
-        │                 │
-        └────────┬────────┘
-                 ▼
-          observer UI / pass strip
+Основной поток React / UI
+          ↕ сообщения
+      Web Worker
+          ↓
+SGP4 для всех активных объектов
 ```
 
-The pass worker rebuilds `SatRec` values from OMM inside the worker so expensive next-hour scanning stays off the render thread. The existing global point collection and selected-target camera path are unchanged.
+Для выбранного спутника покадровый расчёт остаётся отдельным и относительно недорогим.
 
+## Наземный наблюдатель и прогнозы пролётов — v0.7.0
 
-## Selected 3D orbit frame, v0.8.7
-
-The SGP4 propagator gives TEME (approximately inertial) positions at different
-UTC instants. A Cesium spatial orbit must transform ALL sampled TEME positions
-into the same Earth-fixed frame, using **GMST at the selected reference UTC**.
-
+```text
+Геолокация браузера / ручные координаты
+                    │
+                    ▼
+          ObserverLocation (локально)
+                    │
+            ┌───────┴───────┐
+            ▼               ▼
+      Выбранный         Worker прогноза
+       спутник          Каталог OMM ACTIVE
+            │               │
+            ▼               ▼
+     Азимут / угол      AOS / TCA / LOS
+     места / дальность
+            └───────┬───────┘
+                    ▼
+         Интерфейс и лента пролётов
 ```
-OMM + sample dates around now (one orbital period)
-      -> satellite.js SGP4 (TEME, km)
-      -> fixed GMST(now) rotation for every sample
-      -> Cesium ECEF x/y/z (meters)
-      -> polyline ArcType.NONE, no ground clamping
+
+`passPredictionWorker.ts` восстанавливает `SatRec` из OMM внутри Worker, чтобы сканирование ближайшего часа не нагружало поток отрисовки. Глобальные маркеры и система камеры при этом не меняются.
+
+## Пространственная орбита выбранного объекта — v0.8.7
+
+SGP4 возвращает координаты TEME (приближённо инерциальная система) для разных моментов UTC. Для корректной **пространственной** орбиты Cesium все точки TEME должны переводиться в одну земную систему координат с использованием **GMST на опорный момент UTC**, а не отдельного GMST для каждой точки.
+
+```text
+OMM + моменты времени вокруг текущего (один период)
+          → satellite.js / SGP4 (TEME, км)
+          → одинаковая ротация GMST(now) для всех точек
+          → Cesium ECEF x/y/z (метры)
+          → ArcType.NONE без привязки к поверхности
 ```
 
-Do not apply each sample's individual GMST to an orbit line: that is an
-Earth-relative ground track, and collapses GEO orbit geometry. The selected
-marker and CameraManager continue to use **current** UTC and the existing
-SGP4 propagation path. The display polyline's reference frame is refreshed
-every 30 s (its Entity is updated without removal).
+Если использовать отдельный GMST каждой точки, получится наземная трасса, а у GEO орбитальная линия визуально схлопнется. Маркер спутника и `CameraManager` продолжают использовать **текущее** время UTC и свой обычный путь SGP4.
 
-`frontend/src/orbitPath.ts` exposes a pure conversion function tested for
-LEO/MEO/GEO and a historical WGS F9 GEO OMM fixture. See
-`scripts/INDEPENDENT_AUDIT.md` for independent numeric verification.
+Опорная система пространственной линии пересчитывается каждые 30 секунд без удаления Entity. Преобразования реализованы в `frontend/src/orbitPath.ts`, есть проверки LEO/MEO/GEO и пример WGS F9. Для независимой численной сверки см. [проверку расчётов](../scripts/INDEPENDENT_AUDIT.md).
