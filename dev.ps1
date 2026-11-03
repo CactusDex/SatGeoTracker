@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$NoBrowser
 )
 
@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $BackendPython = Join-Path $Root "backend\.venv\Scripts\python.exe"
 $Vite = Join-Path $Root "frontend\node_modules\vite\bin\vite.js"
-$CesiumWorker = Join-Path $Root "frontend\public\cesium\Workers"
+$CesiumWorker = Join-Path $Root "frontend\public\cesium\Workers\createGroundPolylineGeometry.js"
 $Setup = Join-Path $Root "setup.ps1"
 $Stop = Join-Path $Root "stop-dev.ps1"
 

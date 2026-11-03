@@ -1,5 +1,61 @@
 # Changelog
 
+## v0.9.1 — Universal Satellite Hover (accepted)
+
+- Единая карточка наведения в КАРТА / SDR / ПРОЛЁТЫ с названием, NORAD ID, орбитальным классом, высотой и скоростью.
+- Дополнительные данные: угол места при заданном наблюдателе, параметры радиоканала в SDR и ближайший прогноз в ПРОЛЁТЫ.
+- Наведение не захватывает выбор спутника и не меняет камеру; обычное нажатие сохраняется.
+- Перенесены исправления v0.9.0 RC2: ранжирование поиска по NORAD/названию и одинаковые размеры мобильных карточек SDR/ПРОЛЁТЫ.
+- Сохранены Favorites, Graphite Glass, логотип и фавикон из v0.9.0.
+- Принято пользователем после браузерной проверки. Production-сборку на Windows и независимую проверку SGP4 на свежих OMM следует подтвердить отдельно.
+
+## v0.9.0 — Favorites & Identity (functionally accepted)
+
+- Local NORAD-based favorites with cached names, searchable list and quick focus.
+- Preserve unavailable favorites and tolerate restricted browser storage.
+- Graphite Glass translucent inspector with internal scrolling.
+- Full-width pass drawer below the inspector; eliminate bottom-right gap.
+- Add approved orbit/globe branding: header mark and SVG/PNG/ICO favicons.
+- Preserve Cesium static runtime and all v0.8.8 orbital/camera/SDR logic.
+- Browser regression and Windows production build remain to be confirmed.
+
+
+## v0.8.8 — Visual Polish (accepted)
+
+- Remove detached construction meshes from the original NASA ISS B glTF scene.
+- Sanitize previously cached GLB and bust client immutable URL cache.
+- Align inspector top-line buttons; constrain inspector to the pass drawer.
+- Amber satellite points, contrasting station icons and a station badge.
+- No SGP4, camera, pass prediction or SDR algorithm changes.
+- Validate model appearance and responsive layout in browser before release.
+
+## v0.8.7 — Cesium Worker hotfix
+
+- Bundle Cesium static assets so a fresh ZIP has the workers immediately.
+- Automatically validate and refresh Cesium runtime assets when npm dependencies change, before starting Vite.
+- Fail setup on npm / pip install errors, and check the concrete Worker file before starting.
+- No changes to orbital math, 3D camera, FastAPI, or UI rendering logic.
+
+
+## v0.8.7 — Orbital Accuracy (candidate)
+
+- Fix GEO / MEO / LEO orbit line by converting propagated TEME samples with a **single reference GMST**, instead of a time-varying GMST per sample.
+- Render world-space 3D orbit segments with `ArcType.NONE`.
+- Refresh the orbit polyline every 30 seconds so the inertial-plane orientation does not drift relative to moving Earth and selected marker.
+- Add geometry/pass-refinement regression tests and a real WGS F9 satellite.js fixture; add optional independent JS / Python SGP4 + pass audits.
+- Leave CameraManager, SGP4 physics, pass prediction model, SDR and FastAPI intact.
+- Browser and independent SGP4 numeric audits remain required before publishing a stable release.
+
+## v0.8.6 — Stability & UX (candidate)
+
+- Keep the TOOLS popover open when switching ALL / LEO / MEO / GEO filters.
+- Restore globe depth testing for the observer marker so it cannot appear through Earth.
+- Raise the legibility of small telemetry, labels, pass cards and interactive controls.
+- Reflow the narrow-screen header and improve compact pass-card sizing.
+- Leave CameraManager, SGP4, pass prediction and FastAPI unchanged.
+- Browser regression and production build validation are required before release.
+
+
 ## v0.8.5 — Dynamic Camera FOV
 
 - Added smooth perspective FOV control from `25°` to `110°` with `Ctrl + Wheel`.

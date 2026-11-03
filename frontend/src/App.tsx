@@ -1,7 +1,10 @@
 import {
+  ArcType,
+  Billboard,
+  BillboardCollection,
   Cartesian3,
   Color,
-  Ellipsoid,
+  ConstantProperty,
   Entity,
   PointPrimitive,
   PointPrimitiveCollection,
@@ -11,6 +14,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as satellite from "satellite.js";
 
 import { loadSatellites } from "./api";
+import { searchSatellites } from "./search/satelliteSearch";
+import { formatHoverAltitude, formatHoverSpeed } from "./hover/hoverFormat";
+import { useFavorites } from "./favorites/useFavorites";
+import { FavoritesPanel } from "./favorites/FavoritesPanel";
+import { sampleOrbitInEarthFixedFrame } from "./orbitPath";
+import {
+  TRACKER_COLOR,
+  TRACKER_HOVER_COLOR,
+  TRACKER_SELECTED_COLOR,
+  STATION_COLOR,
+  TRACKER_OUTLINE_COLOR,
+  createStationIcon,
+  isSpaceStation,
+} from "./markers/stationMarkers";
 import { EarthVisualController } from "./earth";
 import { CameraManager } from "./camera";
 import type { CameraTargetSample } from "./camera";
@@ -44,17 +61,21 @@ type OrbitFilter = "ALL" | OrbitType;
 type AppMode = "MAP" | "SDR" | "PASSES";
 
 const UPDATE_INTERVAL_MS = 1000;
+// Earth rotates underneath an inertial orbital plane. Keep the polyline
+// anchored to current UTC, even during long satellite-tracking sessions.
+const ORBIT_REFRESH_INTERVAL_MS = 30_000;
 const MAX_INITIAL_POINTS = 16500;
-const DEFAULT_POINT_COLOR = "#8ea8ff";
-const HOVER_POINT_COLOR = "#d5f5ff";
 
 export default function App() {
+  const appShellRef = useRef<HTMLElement | null>(null);
   const globeRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const cameraManagerRef = useRef<CameraManager | null>(null);
   const earthVisualsRef = useRef<EarthVisualController | null>(null);
   const satelliteModelsRef = useRef<SatelliteModelManager | null>(null);
   const collectionRef = useRef<PointPrimitiveCollection | null>(null);
+  const stationCollectionRef = useRef<BillboardCollection | null>(null);
+  const stationBillboardsByNoradRef = useRef(new Map<number, Billboard>());
   const pointsByNoradRef = useRef(new Map<number, PointPrimitive>());
   const satellitesByNoradRef = useRef(new Map<number, SatelliteRuntime>());
   const satellitesRef = useRef<SatelliteRuntime[]>([]);
@@ -74,6 +95,7 @@ export default function App() {
   const [clock, setClock] = useState(new Date());
   const [appMode, setAppMode] = useState<AppMode>("MAP");
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [panelVisible, setPanelVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [orbitFilter, setOrbitFilter] = useState<OrbitFilter>("ALL");
@@ -85,6 +107,8 @@ export default function App() {
 
   const observerSystem = useObserverPasses(predictionRecords);
   const sdrSystem = useSdrData();
+  const { favorites, storageError: favoritesStorageError, toggle: toggleFavorite, remove: removeFavorite, limit: favoritesLimit } = useFavorites();
+  const favoriteIds = useMemo(() => new Set(favorites.map((item) => item.noradId)), [favorites]);
 
   const selected = useMemo(
     () => satellites.find((sat) => sat.noradId === selectedId) ?? null,
@@ -132,6 +156,14 @@ export default function App() {
     () => (hovered ? effectiveSdrByNorad.get(hovered.noradId)?.[0] ?? null : null),
     [hovered, effectiveSdrByNorad]
   );
+
+  const hoveredPass = useMemo(() => {
+    if (appMode !== "PASSES" || !hovered) return null;
+    const nowMs = clock.getTime();
+    return observerSystem.passes.find(
+      (pass) => pass.noradId === hovered.noradId && pass.losMs >= nowMs
+    ) ?? null;
+  }, [appMode, hovered, observerSystem.passes, clock]);
 
   const selectedLookAngles = useMemo(() => {
     if (!selected || !observerSystem.observer) return null;
@@ -192,20 +224,11 @@ export default function App() {
   }, [appMode, effectiveSdrByNorad, orbitAllowedNorads, passModeNorads]);
 
   const searchResults = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return [];
-
-    return satellites
-      .filter((sat) => {
-        const haystack =
-          `${sat.name} ${sat.noradId} ${sat.internationalId}`.toLowerCase();
-        const modeAllowed =
-          appMode === "MAP" ||
-          (appMode === "SDR" && effectiveSdrByNorad.has(sat.noradId)) ||
-          (appMode === "PASSES" && passModeNorads.has(sat.noradId));
-        return modeAllowed && haystack.includes(normalized);
-      })
-      .slice(0, 8);
+    return searchSatellites(satellites, query, (sat) =>
+      appMode === "MAP" ||
+      (appMode === "SDR" && effectiveSdrByNorad.has(sat.noradId)) ||
+      (appMode === "PASSES" && passModeNorads.has(sat.noradId))
+    );
   }, [query, satellites, appMode, effectiveSdrByNorad, passModeNorads]);
 
   useEffect(() => {
@@ -249,6 +272,12 @@ export default function App() {
     viewer.scene.primitives.add(points);
     collectionRef.current = points;
 
+    // Only a handful of stations use billboards. All other satellites
+    // retain the existing high-performance PointPrimitiveCollection.
+    const stationBillboards = new BillboardCollection();
+    viewer.scene.primitives.add(stationBillboards);
+    stationCollectionRef.current = stationBillboards;
+
     const satelliteModels = new SatelliteModelManager(viewer, {
       onStatusChange: (status) => {
         if (!destroyed) setModelStatus(status);
@@ -284,7 +313,9 @@ export default function App() {
       satelliteModelsRef.current = null;
       viewerRef.current = null;
       collectionRef.current = null;
+      stationCollectionRef.current = null;
       pointsByNoradRef.current.clear();
+      stationBillboardsByNoradRef.current.clear();
       satellitesByNoradRef.current.clear();
     };
   }, []);
@@ -365,7 +396,8 @@ export default function App() {
         color: Color.fromCssColorString("#74f2b5"),
         outlineColor: Color.fromCssColorString("#06100c"),
         outlineWidth: 2,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        // Keep the observer hidden when Earth occludes it.
+        disableDepthTestDistance: 0,
       },
     });
   }, [observerSystem.observer]);
@@ -396,24 +428,29 @@ export default function App() {
 
         // The tracked object belongs exclusively to CameraManager's render-frame
         // propagation loop. Never overwrite it from this 1 Hz global loop. A
-        // model-backed target may also suppress its cyan PointPrimitive once
+        // model-backed target may also suppress its point/station icon once
         // the camera is close enough to read the real-scale 3D asset.
         if (selectedNow) {
-          point.show =
-            !satelliteModelsRef.current?.isPointSuppressed(sat.noradId);
+          setMarkerVisibility(
+            sat.noradId,
+            !satelliteModelsRef.current?.isPointSuppressed(sat.noradId)
+          );
           continue;
         }
 
-        point.show = allowed;
+        setMarkerVisibility(sat.noradId, allowed);
 
         const updated = updateSatellite(sat, now);
         if (!updated) continue;
 
-        point.position = Cartesian3.fromDegrees(
+        const position = Cartesian3.fromDegrees(
           sat.longitudeDeg,
           sat.latitudeDeg,
           Math.max(0, sat.altitudeKm) * 1000
         );
+        point.position = position;
+        const icon = stationBillboardsByNoradRef.current.get(sat.noradId);
+        if (icon) icon.position = position;
       }
 
       // UI metrics/search only need a fresh React snapshot once per second.
@@ -425,6 +462,53 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [orbitFilter, appMode, effectiveSdrByNorad, passModeNorads]);
 
+  // Align the right inspector with the TOP of the real pass drawer, including
+  // when that drawer changes height. On MAP keep a comfortable shorter panel.
+  useEffect(() => {
+    const shell = appShellRef.current;
+    if (!shell) return;
+    const strip = shell.querySelector<HTMLElement>(".pass-strip");
+    if (!strip || typeof ResizeObserver === "undefined") {
+      shell.style.removeProperty("--sgt-inspector-bottom");
+      return;
+    }
+    const sync = () => {
+      if (window.innerWidth <= 900) {
+        shell.style.removeProperty("--sgt-inspector-bottom");
+        return;
+      }
+      const shellBottom = shell.getBoundingClientRect().bottom;
+      const top = strip.getBoundingClientRect().top;
+      shell.style.setProperty(
+        "--sgt-inspector-bottom",
+        `${Math.max(24, Math.ceil(shellBottom - top + 12))}px`
+      );
+    };
+    const resizeObserver = new ResizeObserver(sync);
+    resizeObserver.observe(strip);
+    window.addEventListener("resize", sync);
+    sync();
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", sync);
+      shell.style.removeProperty("--sgt-inspector-bottom");
+    };
+  }, [appMode, observerSystem.observer]);
+
+  // Cesium stores the orbit polyline in Earth-fixed coordinates. Refresh the
+  // inertial-to-fixed orientation occasionally as the globe rotates, without
+  // changing the SGP4 propagation loop or CameraManager ownership.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const selectedNorad = selectedIdRef.current;
+      if (selectedNorad === null) return;
+      const sat = satellitesByNoradRef.current.get(selectedNorad);
+      if (sat) drawOrbit(sat);
+    }, ORBIT_REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     orbitFilterRef.current = orbitFilter;
 
@@ -433,8 +517,10 @@ export default function App() {
       if (!point) continue;
 
       if (sat.noradId === selectedIdRef.current) {
-        point.show =
-          !satelliteModelsRef.current?.isPointSuppressed(sat.noradId);
+        setMarkerVisibility(
+          sat.noradId,
+          !satelliteModelsRef.current?.isPointSuppressed(sat.noradId)
+        );
         continue;
       }
 
@@ -443,32 +529,59 @@ export default function App() {
         appMode === "MAP" ||
         (appMode === "SDR" && effectiveSdrByNorad.has(sat.noradId)) ||
         (appMode === "PASSES" && passModeNorads.has(sat.noradId));
-      point.show = orbitAllowed && modeAllowed;
+      setMarkerVisibility(sat.noradId, orbitAllowed && modeAllowed);
     }
   }, [orbitFilter, appMode, effectiveSdrByNorad, passModeNorads]);
 
+  function setMarkerVisibility(noradId: number, visible: boolean) {
+    const point = pointsByNoradRef.current.get(noradId);
+    const stationIcon = stationBillboardsByNoradRef.current.get(noradId);
+    // For a station, keep only the icon (unless icon creation failed).
+    if (point) point.show = visible && !stationIcon;
+    if (stationIcon) stationIcon.show = visible;
+  }
+
   function rebuildPointCollection(items: SatelliteRuntime[]) {
     const collection = collectionRef.current;
-    if (!collection) return;
+    const stationCollection = stationCollectionRef.current;
+    if (!collection || !stationCollection) return;
 
     collection.removeAll();
+    stationCollection.removeAll();
     pointsByNoradRef.current.clear();
+    stationBillboardsByNoradRef.current.clear();
 
+    const stationIconImage = createStationIcon();
     for (const sat of items) {
+      const position = Cartesian3.fromDegrees(
+        sat.longitudeDeg,
+        sat.latitudeDeg,
+        Math.max(0, sat.altitudeKm) * 1000
+      );
+      const station = isSpaceStation(sat.noradId, sat.name);
       const point = collection.add({
-        position: Cartesian3.fromDegrees(
-          sat.longitudeDeg,
-          sat.latitudeDeg,
-          Math.max(0, sat.altitudeKm) * 1000
-        ),
-        pixelSize: 3,
-        color: Color.fromCssColorString(DEFAULT_POINT_COLOR).withAlpha(0.82),
-        outlineColor: Color.TRANSPARENT,
-        outlineWidth: 0,
+        position,
+        pixelSize: station ? 5 : 3,
+        color: Color.fromCssColorString(station ? STATION_COLOR : TRACKER_COLOR),
+        outlineColor: Color.fromCssColorString(TRACKER_OUTLINE_COLOR),
+        outlineWidth: 1,
+        show: true,
         id: sat.noradId,
       });
-
       pointsByNoradRef.current.set(sat.noradId, point);
+
+      if (station && stationIconImage) {
+        const billboard = stationCollection.add({
+          position,
+          image: stationIconImage,
+          width: 22,
+          height: 22,
+          id: sat.noradId,
+          disableDepthTestDistance: 0,
+        });
+        stationBillboardsByNoradRef.current.set(sat.noradId, billboard);
+        point.show = false;
+      }
     }
   }
 
@@ -497,13 +610,11 @@ export default function App() {
       ) ?? false;
 
     const point = pointsByNoradRef.current.get(noradId);
-    if (point) {
-      // This exact position is also returned to CameraManager and the detailed
-      // model manager, guaranteeing that marker/model/camera target cannot
-      // disagree within the frame.
-      point.position = position;
-      point.show = !suppressPoint;
-    }
+    if (point) point.position = position;
+    const stationIcon = stationBillboardsByNoradRef.current.get(noradId);
+    if (stationIcon) stationIcon.position = position;
+    // Point, station icon, camera and 3D model share the same SGP4 position.
+    setMarkerVisibility(noradId, !suppressPoint);
 
     return {
       position,
@@ -528,6 +639,7 @@ export default function App() {
     setSelectedId(noradId);
     setPanelVisible(true);
     setToolsOpen(false);
+    setFavoritesOpen(false);
     refreshPointStyle(noradId);
     drawOrbit(sat);
 
@@ -550,59 +662,71 @@ export default function App() {
   }
 
   function refreshPointStyle(noradId: number) {
+    const stationIcon = stationBillboardsByNoradRef.current.get(noradId);
+    const selectedNow = selectedIdRef.current === noradId;
+    const hoveredNow = hoveredIdRef.current === noradId;
+    if (stationIcon) {
+      stationIcon.scale = selectedNow ? 1.3 : hoveredNow ? 1.15 : 1;
+    }
+
     const point = pointsByNoradRef.current.get(noradId);
     if (!point) return;
-
-    if (selectedIdRef.current === noradId) {
-      point.pixelSize = 10;
-      point.color = Color.CYAN;
-      return;
-    }
-
-    if (hoveredIdRef.current === noradId) {
-      point.pixelSize = 7;
-      point.color = Color.fromCssColorString(HOVER_POINT_COLOR).withAlpha(0.96);
-      return;
-    }
-
-    point.pixelSize = 3;
-    point.color = Color.fromCssColorString(DEFAULT_POINT_COLOR).withAlpha(0.82);
+    const station = isSpaceStation(
+      noradId,
+      satellitesByNoradRef.current.get(noradId)?.name ?? ""
+    );
+    point.pixelSize = selectedNow ? 10 : hoveredNow ? 7 : station ? 5 : 3;
+    point.color = Color.fromCssColorString(
+      station ? STATION_COLOR
+        : selectedNow ? TRACKER_SELECTED_COLOR
+        : hoveredNow ? TRACKER_HOVER_COLOR
+        : TRACKER_COLOR
+    );
+    point.outlineColor = Color.fromCssColorString(TRACKER_OUTLINE_COLOR);
+    point.outlineWidth = selectedNow ? 2 : 1;
   }
 
   function drawOrbit(sat: SatelliteRuntime) {
     const viewer = viewerRef.current;
     if (!viewer) return;
 
-    if (orbitEntityRef.current) {
-      viewer.entities.remove(orbitEntityRef.current);
-      orbitEntityRef.current = null;
+    const anchorTime = new Date();
+    const gmstAtAnchor = satellite.gstime(anchorTime);
+    // All orbital samples are TEME positions at DIFFERENT UTC instants.
+    // Rotating each sample by its OWN GMST draws an Earth-relative ground
+    // track, not the actual spatial orbit (especially misleading for GEO).
+    // Freeze the TEME -> Earth-fixed rotation at one reference instant.
+    const samples = sampleOrbitInEarthFixedFrame(
+      orbitSampleDates(sat, anchorTime, 241),
+      gmstAtAnchor,
+      (date) => {
+        const pv = satellite.propagate(sat.satrec, date);
+        return pv?.position || null;
+      }
+    );
+    if (samples.length < 2) {
+      if (orbitEntityRef.current) {
+        viewer.entities.remove(orbitEntityRef.current);
+        orbitEntityRef.current = null;
+      }
+      return;
     }
 
-    const positions: Cartesian3[] = [];
-
-    for (const date of orbitSampleDates(sat, new Date(), 220)) {
-      const pv = satellite.propagate(sat.satrec, date);
-
-      if (!pv) continue;
-
-      const gmst = satellite.gstime(date);
-      const geodetic = satellite.eciToGeodetic(pv.position, gmst);
-
-      positions.push(
-        Cartesian3.fromRadians(
-          geodetic.longitude,
-          geodetic.latitude,
-          Math.max(0, geodetic.height) * 1000,
-          Ellipsoid.WGS84
-        )
-      );
+    const positions = samples.map(
+      (pos) => new Cartesian3(pos.x, pos.y, pos.z)
+    );
+    // Updating the existing polyline avoids a visible remove/re-add blink
+    // during the 30-second orientation refresh.
+    if (orbitEntityRef.current?.polyline) {
+      orbitEntityRef.current.polyline.positions = new ConstantProperty(positions);
+      return;
     }
-
-    if (positions.length < 2) return;
 
     orbitEntityRef.current = viewer.entities.add({
       polyline: {
         positions,
+        arcType: ArcType.NONE, // Never interpolate 3D orbit segments as surface geodesics.
+        clampToGround: false,
         width: 1.6,
         material: Color.CYAN.withAlpha(0.72),
       },
@@ -629,7 +753,7 @@ export default function App() {
           mode === "MAP" ||
           (mode === "SDR" && effectiveSdrNoradsRef.current.has(previousId)) ||
           (mode === "PASSES" && passModeNoradsRef.current.has(previousId));
-        previousPoint.show = orbitAllowed && modeAllowed;
+        setMarkerVisibility(previousId, orbitAllowed && modeAllowed);
       }
     }
 
@@ -651,13 +775,14 @@ export default function App() {
   }
 
   return (
-    <main className={`app-shell ${appMode.toLowerCase()}-mode`}>
+    <main ref={appShellRef} className={`app-shell ${appMode.toLowerCase()}-mode`}>
       <div ref={globeRef} className="globe" />
 
       <header className="topbar">
         <div className="brand" aria-label="SatGeoTracker">
+          <img className="brand-icon" src="/brand/logo-mark.svg" width="34" height="34" alt="" />
           <span className="brand-name">SatGeoTracker</span>
-          <span className="brand-version">v0.8.5</span>
+          <span className="brand-version">v0.9.1</span>
         </div>
 
         <nav className="mode-switch" aria-label="Режим работы">
@@ -668,6 +793,7 @@ export default function App() {
               onClick={() => {
                 setAppMode(mode);
                 setToolsOpen(false);
+                setFavoritesOpen(false);
                 setQuery("");
               }}
             >
@@ -716,7 +842,10 @@ export default function App() {
             onClick={() => {
               const next = !toolsOpen;
               setToolsOpen(next);
-              if (next) setPanelVisible(false);
+              if (next) {
+                setPanelVisible(false);
+                setFavoritesOpen(false);
+              }
             }}
             aria-expanded={toolsOpen}
             aria-haspopup="dialog"
@@ -728,13 +857,55 @@ export default function App() {
             onClick={() => {
               const next = !panelVisible;
               setPanelVisible(next);
-              if (next) setToolsOpen(false);
+              if (next) {
+                setToolsOpen(false);
+                setFavoritesOpen(false);
+              }
             }}
             aria-expanded={panelVisible}
             title="Показать или скрыть рабочую панель"
           >
             ПАНЕЛЬ
           </button>
+          <button
+            type="button"
+            className={`shell-button favorites-trigger ${favoritesOpen ? "active" : ""}`}
+            aria-label={`Избранные спутники, ${favorites.length}`}
+            aria-expanded={favoritesOpen}
+            title="Избранные спутники"
+            onClick={() => {
+              const next = !favoritesOpen;
+              setFavoritesOpen(next);
+              if (next) {
+                setPanelVisible(false);
+                setToolsOpen(false);
+              }
+            }}
+          >
+            <span className="favorites-trigger-star" aria-hidden="true">★</span>
+            {favorites.length > 0 && <span className="favorites-trigger-count">{favorites.length}</span>}
+          </button>
+
+          {favoritesOpen && (
+            <FavoritesPanel
+              favorites={favorites}
+              satellitesByNorad={satellitesByNoradRef.current}
+              storageError={favoritesStorageError}
+              catalogLoading={Boolean(loadingText)}
+              catalogError={Boolean(error)}
+              limit={favoritesLimit}
+              onSelectSatellite={(noradId) => {
+                // An item from Favorites must remain accessible even if the
+                // previous SDR/PASSES workspace filtered it out.
+                setAppMode("MAP");
+                setOrbitFilter("ALL");
+                selectSatellite(noradId);
+                setFavoritesOpen(false);
+              }}
+              onRemoveFavorite={removeFavorite}
+              onClose={() => setFavoritesOpen(false)}
+            />
+          )}
 
         {toolsOpen && (
           <section className="tools-menu surface-card">
@@ -768,7 +939,6 @@ export default function App() {
                     className={orbitFilter === filter ? "active" : ""}
                     onClick={() => {
                       setOrbitFilter(filter);
-                      setToolsOpen(false);
                     }}
                   >
                     {orbitFilterLabel(filter)}
@@ -825,20 +995,52 @@ export default function App() {
         </section>
       )}
 
-      {appMode === "SDR" && hovered && hoveredRadio && hovered.noradId !== selectedId && (
-        <div className="sdr-hover-card surface-card">
-          <span className="tool-kicker">SDR · ЦЕЛЬ</span>
-          <strong>{hovered.name}</strong>
-          <div className="sdr-hover-frequency">
-            {formatFrequency(transmitterFrequencyHz(hoveredRadio))}
+      {/* A single lightweight hover inspector works in every workspace. Camera
+          and selection are unchanged; scene picking supplies the NORAD ID. */}
+      {hovered && (
+        <div className="sat-hover-card surface-card" role="tooltip" aria-label={`Спутник ${hovered.name}`}>
+          <span className="tool-kicker">
+            {appMode === "SDR" ? "SDR · СПУТНИК" : appMode === "PASSES" ? "ПРОЛЁТЫ · СПУТНИК" : "КАРТА · СПУТНИК"}
+          </span>
+          <strong title={hovered.name}>{hovered.name}</strong>
+          <div className="sat-hover-identifiers">
+            <span>NORAD {hovered.noradId}</span>
+            <span>{hovered.orbitType}</span>
+            {isSpaceStation(hovered.noradId, hovered.name) && <span>СТАНЦИЯ</span>}
           </div>
-          <div className="sdr-hover-meta">
-            <span>{hoveredRadio.mode || "—"}</span>
-            <span>{hoveredRadio.service || "Сервис не указан"}</span>
-            {hoveredLookAngles && (
-              <span>{hoveredLookAngles.elevationDeg.toFixed(1)}° EL</span>
-            )}
+          <div className="sat-hover-telemetry">
+            <div>
+              <span>ВЫСОТА</span>
+              <strong>{formatHoverAltitude(hovered.altitudeKm)}</strong>
+            </div>
+            <div>
+              <span>СКОРОСТЬ</span>
+              <strong>{formatHoverSpeed(hovered.speedKmS)}</strong>
+            </div>
           </div>
+          {appMode === "SDR" && hoveredRadio && (
+            <>
+              <div className="sat-hover-frequency">
+                {formatFrequency(transmitterFrequencyHz(hoveredRadio))}
+              </div>
+              <div className="sat-hover-radio-tags">
+                <span>{hoveredRadio.mode || "Режим не указан"}</span>
+                <span>{hoveredRadio.service || "Сервис не указан"}</span>
+              </div>
+            </>
+          )}
+          {hoveredLookAngles && (
+            <div className="sat-hover-observer">
+              <span>УГОЛ НАБЛЮДЕНИЯ</span>
+              <strong>{hoveredLookAngles.elevationDeg.toFixed(1)}°</strong>
+            </div>
+          )}
+          {appMode === "PASSES" && hoveredPass && (
+            <div className="sat-hover-pass">
+              <span>БЛИЖАЙШИЙ ПРОЛЁТ</span>
+              <strong>{formatPassSummary(hoveredPass, clock)}</strong>
+            </div>
+          )}
         </div>
       )}
 
@@ -855,24 +1057,42 @@ export default function App() {
       <aside className={`sat-panel surface-card ${panelVisible ? "open" : ""}`}>
         {selected ? (
           <>
-            <div className="panel-actions">
-              <button className="panel-action" onClick={releaseTracking} title="Завершить слежение">
-                ЗЕМЛЯ
-              </button>
-              <button className="close-btn" onClick={closePanel} aria-label="Скрыть панель">
-                ×
-              </button>
-            </div>
-
-            <div className="eyebrow">
-              {appMode === "SDR"
-                ? "SDR ЦЕЛЬ · СЛЕЖЕНИЕ"
-                : appMode === "PASSES"
-                  ? "ЦЕЛЬ ПРОЛЁТА · СЛЕЖЕНИЕ"
-                  : "ВЫБРАННЫЙ ОБЪЕКТ · СЛЕЖЕНИЕ"}
+            <div className="inspector-topline">
+              <div className="eyebrow">
+                {appMode === "SDR"
+                  ? "SDR ЦЕЛЬ · СЛЕЖЕНИЕ"
+                  : appMode === "PASSES"
+                    ? "ЦЕЛЬ ПРОЛЁТА · СЛЕЖЕНИЕ"
+                    : "ВЫБРАННЫЙ ОБЪЕКТ · СЛЕЖЕНИЕ"}
+              </div>
+              <div className="panel-actions">
+                <button className="panel-action" onClick={releaseTracking} title="Завершить слежение">
+                  ЗЕМЛЯ
+                </button>
+                <button className="close-btn" onClick={closePanel} aria-label="Скрыть панель">
+                  ×
+                </button>
+              </div>
             </div>
             <h1>{selected.name}</h1>
-            <div className="orbit-pill">{selected.orbitType}</div>
+            <div className="inspector-object-flags">
+              <div className="orbit-pill">{selected.orbitType}</div>
+              {isSpaceStation(selected.noradId, selected.name) && (
+                <span className="station-pill">СТАНЦИЯ</span>
+              )}
+              <button
+                type="button"
+                className={`favorite-inspector-toggle ${favoriteIds.has(selected.noradId) ? "is-favorite" : ""}`}
+                title={favoriteIds.has(selected.noradId) ? "Убрать из избранного" : "Добавить в избранное"}
+                aria-pressed={favoriteIds.has(selected.noradId)}
+                aria-label={favoriteIds.has(selected.noradId) ? `Убрать ${selected.name} из избранного` : `Добавить ${selected.name} в избранное`}
+                disabled={!favoriteIds.has(selected.noradId) && favorites.length >= favoritesLimit}
+                onClick={() => toggleFavorite(selected.noradId, selected.name)}
+              >
+                <span aria-hidden="true">{favoriteIds.has(selected.noradId) ? "★" : "☆"}</span>
+                <span>{favoriteIds.has(selected.noradId) ? "В ИЗБРАННОМ" : "В ИЗБРАННОЕ"}</span>
+              </button>
+            </div>
 
             {modelStatus?.noradId === selected.noradId && (
               <div className={`model-status ${modelStatus.state.toLowerCase()}`}>
@@ -975,13 +1195,15 @@ export default function App() {
           </>
         ) : (
           <>
-            <div className="panel-actions">
-              <button className="close-btn" onClick={closePanel} aria-label="Скрыть панель">
-                ×
-              </button>
+            <div className="inspector-topline">
+              <div className="eyebrow">{modeLabel(appMode)} · РАБОЧАЯ ОБЛАСТЬ</div>
+              <div className="panel-actions">
+                <button className="close-btn" onClick={closePanel} aria-label="Скрыть панель">
+                  ×
+                </button>
+              </div>
             </div>
             <div className="workspace-overview">
-              <div className="eyebrow">{modeLabel(appMode)} · РАБОЧАЯ ОБЛАСТЬ</div>
               <h1>
                 {appMode === "SDR"
                   ? "Радиоцели"

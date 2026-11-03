@@ -1,0 +1,13 @@
+SatGeoTracker v0.8.8 — Visual Polish (candidate)
+
+1. NASA ISS B GLB: removed seven detached model nodes, including cached files.
+2. Right inspector: aligned EARTH and CLOSE; dynamic cap above pass strip.
+3. Satellite tracker: amber dots with dark outlines.
+4. Space stations: separate magenta icons for ISS / CSS (Tiangong).
+5. SGP4, orbit geometry, camera tracking, AOS/TCA/LOS and SDR unchanged.
+
+INSTALL: Extract into a new folder; run setup.cmd and dev.cmd.
+TEST: frontend\test-orbits.cmd; frontend\test-markers.cmd;
+      python -m unittest discover -s backend/tests -v
+CHECK: docs/QA_CHECKLIST_v0.8.8.md
+NOTE: browser acceptance test remains required before merging/releasing.

@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $PSScriptRoot
 $Frontend = Join-Path $Root "frontend"
@@ -18,6 +18,10 @@ $Vite = Join-Path $Frontend "node_modules\vite\bin\vite.js"
 if (-not (Test-Path $Vite)) {
     throw "Vite not found. Run setup.cmd first."
 }
+
+# Always verify Cesium workers before launching Vite; no stale runtime allowed.
+& $Node (Join-Path $Frontend "scripts\prepare-cesium.mjs")
+if ($LASTEXITCODE -ne 0) { throw "Cesium runtime validation failed; run setup.cmd." }
 
 New-Item -ItemType Directory -Force $RunDir | Out-Null
 Set-Content -Path $PidFile -Value $PID -Encoding ascii

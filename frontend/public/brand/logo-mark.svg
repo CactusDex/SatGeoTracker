@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="SatGeoTracker: Земля и спутник на орбите">
+  <circle cx="60" cy="60" r="31" stroke="#DDEAF1" stroke-width="3"/>
+  <path d="M46 37c13 6 13 14 8 19l11 4-5 14-12 4-1 14M73 35c9 13 9 17-3 21l7 10-9 10" stroke="#DDEAF1" stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="60" cy="60" rx="51" ry="20" stroke="#E7B960" stroke-width="3" transform="rotate(-33 60 60)"/>
+  <circle cx="100" cy="36" r="5" fill="#E7B960"/>
+</svg>
