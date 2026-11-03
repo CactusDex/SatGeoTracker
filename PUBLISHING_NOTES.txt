@@ -1,0 +1,27 @@
+SatGeoTracker v0.9.1 — Safe GitHub Publishing
+
+Why this archive supersedes the previous full ZIP for GitHub publication:
+- Keeps the original protected .gitignore entries (.env, secrets, private keys, local databases).
+- Publication script does not overwrite remote .gitignore from the ZIP.
+- Publication script excludes local secret/config files and the publication tools themselves.
+- Runs git diff --cached --check before a commit.
+- Never force-pushes and never pushes to main directly.
+
+To publish:
+1. Close the previous Publish-GitHub window or wait for its final result.
+2. Extract THIS archive into a fresh directory.
+3. Run Publish-GitHub-v0.9.1.cmd, and ensure the last output says
+   Successfully pushed branch: release/v0.9.1
+4. Open https://github.com/CactusDex/SatGeoTracker/compare/main...release/v0.9.1?expand=1
+   to review the PR. Check GitHub diff for unexpected private files.
+
+LF/CRLF warnings are informational. The line `git diff --cached --stat` is
+only a preview, not proof that commit/push succeeded.
+
+If the branch already exists, the script fetches it and checks for changes.
+Keep your local v0.9.1 as a backup during this process.
+
+PUBLISH FIX 2026-11-04:
+- Removed the extra blank line at EOF in frontend/tests/orbital-geometry.test.mjs.
+- Kept git diff --cached --check enabled and preserved protected .gitignore.
+- LF/CRLF notifications are warnings, not a publication failure.

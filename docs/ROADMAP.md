@@ -184,3 +184,80 @@ Next target:
 - Temporary auto-hiding FOV HUD.
 - Perspective-only implementation; true fisheye distortion remains deferred.
 - Camera baseline v0.4.2; no changes to SGP4, Earth/ISS 3D, Observer/Pass Engine, or SDR backend.
+
+## v0.8.6 — Stability & UX (candidate)
+
+- [x] Keep orbital filter tools open during selection.
+- [x] Respect Earth occlusion for observer marker.
+- [x] Improve compact typography and narrow-viewport layout.
+- [ ] Validate with a production frontend build and browser regression checks.
+
+## Planned v0.9.0 — Local satellite favorites
+
+- [ ] Save favorite NORAD IDs in browser localStorage.
+- [ ] Add star action to satellite inspector and a favorites list.
+- [ ] Preserve unavailable IDs without requiring a server-side database.
+
+
+## v0.8.7 — Orbital Accuracy (candidate)
+
+- [x] Separate spatial orbit from time-varying Earth-fixed ground track.
+- [x] Render one TEME -> Earth-fixed rotation at the orbit's reference UTC time.
+- [x] Use ArcType.NONE and refresh the selected orbit every 30 seconds.
+- [x] Unit-test inertial orbit geometry and pass crossing/peak refinement.
+- [x] Add optional JS vs Python SGP4 audit scripts.
+- [ ] Verify fresh LEO / MEO / GEO OMM numerically on the user's machine.
+- [ ] Check GEO image / Cesium rendering and AOS/TCA/LOS against independent results.
+
+
+## v0.8.8 — Visual Polish (candidate)
+
+- [x] Remove isolated mesh nodes from NASA ISS B GLB (including old cache migration).
+- [x] Align return-to-Earth and close controls in inspector header.
+- [x] Cap inspector at pass-strip boundary with internal scroll.
+- [x] High-contrast amber point markers, dark outline.
+- [x] Station pictogram and distinct station label/color.
+- [ ] Verify live 3D ISS rendering and responsive layout on Windows browser.
+
+## v0.9.0 — Satellite Favorites (planned, unchanged)
+
+- [ ] Add/remove favorites and quick focus.
+- [ ] Persist NORAD IDs to browser localStorage.
+- [ ] Retain entries temporarily missing from online catalog.
+
+## v0.9.0 — Favorites & Identity (functionally accepted)
+
+- [x] Store NORAD IDs and cached names in browser localStorage without a database.
+- [x] Inspector star action, searchable Favorites popover and quick focus.
+- [x] Preserve unavailable favorites until manually removed.
+- [x] Graphite Glass inspector with text readability fallback.
+- [x] Full-width bottom pass drawer; inspector aligns above the drawer.
+- [x] Approved orbit/globe logo and SVG/PNG/ICO favicons.
+- [x] TypeScript check and automated orbital/marker/favorites/shell tests.
+- [ ] Validate actual interaction, scrolling and adaptive layout in Windows browsers.
+- [ ] Validate production Vite build after native platform dependencies are installed.
+- [ ] Merge accepted version into GitHub after user approval.
+
+## v0.9.0 RC2 — Search & Mobile Layout (candidate)
+
+- [x] Search relevance ranking, canonical ISS first, NORAD-based deduplication.
+- [x] Consistent collapsed mobile pass drawer for SDR and PASSES.
+- [x] Automated search and CSS contract tests.
+- [ ] Validate collapsed/expanded drawer in browser at 390/520/768 px.
+- [ ] Confirm Cesium console and production build on Windows.
+
+## v0.9.1 — Universal Satellite Hover (accepted)
+
+- [x] Одна read-only карточка наведения для КАРТА, SDR и ПРОЛЁТЫ.
+- [x] Название, NORAD, класс орбиты, высота, скорость, режимные данные.
+- [x] Поиск с приоритетом основной МКС и NORAD, дедупликация по NORAD ID.
+- [x] Единая мобильная геометрия окна и карточек SDR/ПРОЛЁТЫ.
+- [x] Проверено пользователем на локальном запуске; поведение карточек принято.
+- [ ] Подтвердить production-сборку на Windows и сверку расчётов на свежих OMM.
+
+## Следующие этапы (после v0.9.1)
+
+- [ ] Финальная техническая проверка Cesium в Console после долгой работы.
+- [ ] Независимая численная сверка SGP4 и AOS/TCA/LOS с эталонными данными.
+- [ ] Автоматическая сборка и CI проверки в GitHub Actions.
+- [ ] Определить требования к v1.0.0 без лишних функций и серверной БД.

@@ -13,6 +13,8 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from .iss_model_cleanup import clean_iss_glb
+
 APP_DIR = Path(__file__).resolve().parent
 LEGACY_CACHE_DIR = APP_DIR.parent / ".cache"
 LEGACY_CACHE_FILE = LEGACY_CACHE_DIR / "celestrak-active.json"
@@ -392,7 +394,15 @@ def _read_cached_iss_model() -> bytes | None:
     except OSError:
         return None
 
-    return data if _looks_like_glb(data) else None
+    if not _looks_like_glb(data):
+        return None
+
+    # A previous installation may have stored the unmodified NASA asset.
+    # Clean it once, persist the corrected scene, and reuse that same cache.
+    cleaned, removed = clean_iss_glb(data)
+    if removed:
+        _write_cached_iss_model(cleaned)
+    return cleaned
 
 
 def _write_cached_iss_model(data: bytes) -> None:
@@ -442,8 +452,9 @@ async def _get_iss_model(request: Request) -> Response:
                 continue
 
             if response.status_code == 200 and _looks_like_glb(response.content):
-                _write_cached_iss_model(response.content)
-                return _iss_model_response(response.content, "nasa")
+                cleaned, _ = clean_iss_glb(response.content)
+                _write_cached_iss_model(cleaned)
+                return _iss_model_response(cleaned, "nasa")
 
             errors.append(
                 f"{url}: HTTP {response.status_code}, {len(response.content)} bytes"

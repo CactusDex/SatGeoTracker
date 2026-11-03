@@ -11,7 +11,7 @@ export const SATELLITE_MODEL_DEFINITIONS: readonly SatelliteModelDefinition[] = 
     key: "iss-nasa-b",
     noradIds: [25544],
     label: "ISS 3D",
-    url: "/api/models/iss.glb",
+    url: "/api/models/iss.glb?v=0.8.8",
     credit: "NASA / Michael D. Carbajal",
 
     // NASA lists the ISS as 109 m end-to-end. The source GLB is normalized at

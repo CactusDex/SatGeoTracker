@@ -1,12 +1,20 @@
 {
   "name": "satgeotracker-frontend",
   "private": true,
-  "version": "0.8.5",
+  "version": "0.9.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort"
+    "test:orbits": "node --experimental-strip-types --test tests/orbital-geometry.test.mjs tests/sgp4-geo-reference.test.mjs",
+    "test:markers": "node --experimental-strip-types --test tests/station-markers.test.mjs",
+    "test:favorites": "node --experimental-strip-types --test tests/favorites.test.mjs",
+    "test:all": "node --experimental-strip-types --test tests/*.test.mjs",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "predev": "node scripts/prepare-cesium.mjs",
+    "prebuild": "node scripts/prepare-cesium.mjs",
+    "prepreview": "node scripts/prepare-cesium.mjs",
+    "check:cesium": "node scripts/check-cesium.mjs"
   },
   "dependencies": {
     "cesium": "^1.145.0",

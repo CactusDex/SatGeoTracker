@@ -150,3 +150,28 @@ selected satellite     pass worker
 ```
 
 The pass worker rebuilds `SatRec` values from OMM inside the worker so expensive next-hour scanning stays off the render thread. The existing global point collection and selected-target camera path are unchanged.
+
+
+## Selected 3D orbit frame, v0.8.7
+
+The SGP4 propagator gives TEME (approximately inertial) positions at different
+UTC instants. A Cesium spatial orbit must transform ALL sampled TEME positions
+into the same Earth-fixed frame, using **GMST at the selected reference UTC**.
+
+```
+OMM + sample dates around now (one orbital period)
+      -> satellite.js SGP4 (TEME, km)
+      -> fixed GMST(now) rotation for every sample
+      -> Cesium ECEF x/y/z (meters)
+      -> polyline ArcType.NONE, no ground clamping
+```
+
+Do not apply each sample's individual GMST to an orbit line: that is an
+Earth-relative ground track, and collapses GEO orbit geometry. The selected
+marker and CameraManager continue to use **current** UTC and the existing
+SGP4 propagation path. The display polyline's reference frame is refreshed
+every 30 s (its Entity is updated without removal).
+
+`frontend/src/orbitPath.ts` exposes a pure conversion function tested for
+LEO/MEO/GEO and a historical WGS F9 GEO OMM fixture. See
+`scripts/INDEPENDENT_AUDIT.md` for independent numeric verification.

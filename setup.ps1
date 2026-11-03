@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $Root = $PSScriptRoot
 $Backend = Join-Path $Root "backend"
@@ -74,18 +74,21 @@ if (-not (Test-Path $venvPython)) {
 
 Write-Host "Installing backend dependencies..."
 & $venvPython -m pip install -r (Join-Path $Backend "requirements.txt")
+if ($LASTEXITCODE -ne 0) { throw "Python dependency installation failed." }
 
 Write-Host "Installing frontend dependencies..."
 Push-Location $Frontend
 try {
-    & $npm install
+    & $npm ci
+    if ($LASTEXITCODE -ne 0) { throw "npm ci failed." }
 }
 finally {
     Pop-Location
 }
 
 Write-Host "Copying Cesium runtime assets..."
-Copy-CesiumRuntime -FrontendPath $Frontend
+& $node (Join-Path $Frontend "scripts\prepare-cesium.mjs") --force
+if ($LASTEXITCODE -ne 0) { throw "Cesium runtime synchronization failed." }
 
 Write-Host ""
 Write-Host "Setup complete." -ForegroundColor Green
