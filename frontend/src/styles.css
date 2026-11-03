@@ -2708,3 +2708,145 @@ button {
     right: 0;
   }
 }
+
+/* Stability & UX v0.8.6 -------------------------------------------------- */
+/* Restore legible type without changing the established graphite identity. */
+.mode-switch button,
+.shell-button,
+.panel-action,
+.tools-menu-head strong,
+.tools-section-label,
+.tools-filters.filters button,
+.tools-menu .observer-heading strong,
+.tools-menu .sdr-filter-heading strong,
+.tools-menu .observer-coordinates span,
+.tools-menu .observer-coordinates small,
+.tools-menu .observer-message,
+.tools-menu .elevation-filter button,
+.eyebrow,
+.orbit-pill,
+.technical-details summary {
+  font-size: 11px;
+}
+
+.search-wrap input,
+.detail-row span,
+.detail-row strong,
+.telemetry-item strong,
+.mode-context-card > strong {
+  font-size: 12px;
+}
+
+.telemetry-item span,
+.pass-strip-title strong,
+.pass-count,
+.pass-card-top span,
+.pass-card-top small,
+.pass-card-mainline > span,
+.prediction-state {
+  font-size: 10px;
+}
+
+.pass-card-mainline > strong,
+.pass-empty {
+  font-size: 12px;
+}
+
+.telemetry-item span,
+.tools-section-label,
+.technical-details summary {
+  letter-spacing: 0.04em;
+}
+
+.tools-menu .observer-actions button,
+.tools-menu .sdr-select-grid select,
+.tools-menu .elevation-filter button,
+.tools-filters.filters button {
+  min-height: 32px;
+  height: auto;
+}
+
+.telemetry-item strong,
+.detail-row strong {
+  overflow-wrap: anywhere;
+}
+
+.pass-card,
+.pass-more {
+  width: 190px;
+  min-width: 190px;
+  min-height: 70px;
+  height: auto;
+}
+
+.pass-strip.expanded .pass-card,
+.pass-strip.expanded .pass-more {
+  min-height: 92px;
+  height: auto;
+}
+
+.pass-strip.expanded .pass-cards {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+
+.pass-strip-meta button,
+.icon-button {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+@media (max-width: 900px) {
+  .mode-switch button {
+    font-size: 11px;
+    min-width: 0;
+    padding: 7px 8px;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand actions"
+      "modes modes"
+      "search search";
+    gap: 7px;
+  }
+
+  .mode-switch {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .search-wrap input {
+    font-size: 14px;
+  }
+
+  .tools-menu,
+  .app-shell:has(.sat-panel.open) .tools-menu {
+    max-height: min(65vh, calc(100vh - 130px));
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-name {
+    font-size: 12px;
+  }
+
+  .shell-button {
+    min-width: 0;
+    padding: 0 7px;
+    font-size: 10px;
+  }
+
+  .topbar-actions {
+    gap: 3px;
+  }
+
+  .tools-menu,
+  .app-shell:has(.sat-panel.open) .tools-menu {
+    width: min(320px, calc(100vw - 16px));
+  }
+
+  .geometry-telemetry {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
