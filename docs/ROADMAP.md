@@ -184,3 +184,16 @@ Next target:
 - Temporary auto-hiding FOV HUD.
 - Perspective-only implementation; true fisheye distortion remains deferred.
 - Camera baseline v0.4.2; no changes to SGP4, Earth/ISS 3D, Observer/Pass Engine, or SDR backend.
+
+## v0.8.6 — Stability & UX (candidate)
+
+- [x] Keep orbital filter tools open during selection.
+- [x] Respect Earth occlusion for observer marker.
+- [x] Improve compact typography and narrow-viewport layout.
+- [ ] Validate with a production frontend build and browser regression checks.
+
+## Planned v0.9.0 — Local satellite favorites
+
+- [ ] Save favorite NORAD IDs in browser localStorage.
+- [ ] Add star action to satellite inspector and a favorites list.
+- [ ] Preserve unavailable IDs without requiring a server-side database.
