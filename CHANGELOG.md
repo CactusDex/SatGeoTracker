@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.8.6 — Stability & UX (candidate)
+
+- Keep the TOOLS popover open when switching ALL / LEO / MEO / GEO filters.
+- Restore globe depth testing for the observer marker so it cannot appear through Earth.
+- Raise the legibility of small telemetry, labels, pass cards and interactive controls.
+- Reflow the narrow-screen header and improve compact pass-card sizing.
+- Leave CameraManager, SGP4, pass prediction and FastAPI unchanged.
+- Browser regression and production build validation are required before release.
+
+
 ## v0.8.5 — Dynamic Camera FOV
 
 - Added smooth perspective FOV control from `25°` to `110°` with `Ctrl + Wheel`.
