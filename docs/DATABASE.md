@@ -1,58 +1,54 @@
-# Database model
+# Модель данных и решение об использовании БД
 
-PostgreSQL is not required for the first globe demo, but the schema is defined now so runtime calculations do not leak into persistence.
+## Текущее состояние
 
-## `satellites`
+В версии **v0.9.1 серверная база данных не подключена и не требуется** для локального MVP. Орбитальные элементы загружаются и кешируются, положения спутников вычисляются по SGP4 в процессе работы, а избранное хранится в `localStorage` браузера.
 
-One row per cataloged object.
+Файл `database/schema.sql` — историческая заготовка схемы на случай будущего расширения. Его наличие не означает, что PostgreSQL нужен для запуска.
 
-Primary key:
+## Таблица `satellites` (проект схемы)
 
-- `norad_cat_id`
+По одной строке на объект каталога.
 
-Important attributes:
+Первичный ключ: `norad_cat_id`.
 
-- international designator;
-- name;
-- object type;
-- future owner code;
-- launch date;
-- coarse orbit type.
+Предусмотренные атрибуты:
 
-## `orbital_elements`
+- международное обозначение;
+- название;
+- тип объекта;
+- код владельца (при будущем обогащении данных);
+- дата запуска;
+- укрупнённый класс орбиты.
 
-Versioned orbital-element sets for a satellite.
+## Таблица `orbital_elements` (проект схемы)
 
-One satellite can have many element sets over time.
+Версионируемые наборы орбитальных элементов. Для одного спутника допускается несколько наборов за разные моменты времени.
 
-Important fields:
+Основные поля:
 
-- epoch;
-- mean motion;
-- eccentricity;
-- inclination;
-- RAAN;
-- argument of pericenter;
-- mean anomaly;
+- эпоха (epoch);
+- среднее движение (mean motion);
+- эксцентриситет;
+- наклонение;
+- долгота восходящего узла (RAAN);
+- аргумент перицентра;
+- средняя аномалия;
 - BSTAR;
-- mean-motion derivatives.
+- производные среднего движения.
 
-## `sync_runs`
+## Таблица `sync_runs` (проект схемы)
 
-Operational journal for CelesTrak synchronization.
+Журнал синхронизации с CelesTrak:
 
-Stores:
+- источник и набор данных;
+- статус выполнения;
+- число полученных записей;
+- временные метки;
+- текст ошибки.
 
-- source/dataset;
-- status;
-- rows received;
-- timestamps;
-- error message.
+## Что сознательно не реализуется
 
-## Explicit non-goal
+Не следует создавать таблицу с ежесекундными широтой, долготой, высотой и скоростью всех объектов. При 16 000 спутников это дало бы примерно **16 000 новых строк в секунду** без практической пользы для текущего приложения.
 
-Do not create a table receiving all satellite positions every second.
-
-For 16,000 objects this would generate approximately 16,000 rows/second without providing value to the MVP.
-
-Current position is derived on demand from orbital elements and time.
+Положение рассчитывается по **орбитальным элементам и времени** по запросу.
