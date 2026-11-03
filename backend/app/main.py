@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .iss_model_cleanup import clean_iss_glb
+from .satellite_media import fetch_satellite_media
 
 APP_DIR = Path(__file__).resolve().parent
 LEGACY_CACHE_DIR = APP_DIR.parent / ".cache"
@@ -592,6 +593,14 @@ async def satellites() -> dict[str, Any]:
         "source": source,
         "data": data,
     }
+
+
+@app.get("/api/satellites/{norad_id}/media")
+async def satellite_media(norad_id: int, request: Request) -> dict[str, Any]:
+    """Optional photograph metadata for any selected satellite, in every workspace."""
+    if not 1 <= norad_id <= 999_999_999:
+        raise HTTPException(status_code=404, detail="Invalid NORAD ID")
+    return await fetch_satellite_media(norad_id, request.app.state.asset_http_client)
 
 
 @app.get("/api/sdr/transmitters")
