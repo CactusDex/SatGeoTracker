@@ -3,6 +3,11 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  // satellite.js 7.x bundles WASM code with top-level await inside workers.
+  // Vite defaults worker output to IIFE, which cannot contain top-level await.
+  worker: {
+    format: "es",
+  },
   server: {
     host: "127.0.0.1",
     port: 5173,
