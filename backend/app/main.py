@@ -115,7 +115,7 @@ async def lifespan(app: FastAPI):
         limits=limits,
         follow_redirects=True,
         headers={
-            "User-Agent": "SatGeoTracker-MVP/0.8 educational-project",
+            "User-Agent": "SatGeoTracker-MVP/0.9.2 educational-project",
             "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
         },
     )
@@ -124,7 +124,7 @@ async def lifespan(app: FastAPI):
         limits=httpx.Limits(max_connections=8, max_keepalive_connections=4),
         follow_redirects=True,
         headers={
-            "User-Agent": "SatGeoTracker-MVP/0.8 educational-project",
+            "User-Agent": "SatGeoTracker-MVP/0.9.2 educational-project",
             "Accept": "model/gltf-binary,application/octet-stream,*/*;q=0.8",
         },
     )
@@ -137,7 +137,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="SatGeoTracker API",
-    version="0.8",
+    version="0.9.2",
     lifespan=lifespan,
 )
 
@@ -214,7 +214,7 @@ async def get_active_satellites() -> tuple[list[dict[str, Any]], str]:
 
         timeout = httpx.Timeout(30.0, connect=10.0)
         headers = {
-            "User-Agent": "SatGeoTracker-MVP/0.8 educational-project",
+            "User-Agent": "SatGeoTracker-MVP/0.9.2 educational-project",
             "Accept": "application/json",
         }
 
