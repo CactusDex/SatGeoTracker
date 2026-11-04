@@ -9,9 +9,9 @@
 Интерактивный 3D-трекер спутников с прогнозированием пролётов, радиоданными и визуализацией орбит.
 
 <p>
-  <img alt="Версия v0.9.1" src="https://img.shields.io/badge/%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F-v0.9.1-E7B960?style=flat-square&amp;labelColor=151A20" />
+  <img alt="Версия v0.9.2" src="https://img.shields.io/badge/%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F-v0.9.2-E7B960?style=flat-square&amp;labelColor=151A20" />
   <img alt="Платформа Windows" src="https://img.shields.io/badge/%D0%BF%D0%BB%D0%B0%D1%82%D1%84%D0%BE%D1%80%D0%BC%D0%B0-Windows-647785?style=flat-square&amp;labelColor=151A20" />
-  <img alt="Тесты 37 из 37" src="https://img.shields.io/badge/%D1%82%D0%B5%D1%81%D1%82%D1%8B-37%20%D0%B8%D0%B7%2037-528B75?style=flat-square&amp;labelColor=151A20" />
+  <img alt="Тесты 41 из 41" src="https://img.shields.io/badge/%D1%82%D0%B5%D1%81%D1%82%D1%8B-41%20%D0%B8%D0%B7%2041-528B75?style=flat-square&amp;labelColor=151A20" />
 </p>
 
 <img src="docs/assets/branding/showcase.svg" alt="SatGeoTracker: Земля и орбиты спутников" width="100%" />
@@ -42,6 +42,10 @@
 - **Избранное.** Сохранение объектов по NORAD ID, поиск, быстрый переход и хранение списка в браузере.
 - **Камера и 3D.** Сопровождение спутника, траектории, модель МКС, отдельные маркеры станций, настройка угла обзора.
 - **Graphite Glass.** Компактный графитовый интерфейс, янтарные маркеры, адаптивные панели и оригинальный логотип.
+
+## Фотографии спутников (v0.9.2)
+
+При выборе спутника в любом режиме (**КАРТА / SDR / ПРОЛЁТЫ**) приложение проверяет наличие изображения в SatNOGS DB по точному NORAD ID. При наличии фото рядом с названием показывается компактная миниатюра со ссылкой на источник. Отсутствие снимка не вызывает ошибок и не загружает весь каталог фотографий. Метаданные кешируются в FastAPI. Подробности — [Satellite Media](docs/SATELLITE_MEDIA.md).
 
 ## Быстрый запуск
 
@@ -91,7 +95,7 @@ npm run test:all
 npm run check:cesium
 ```
 
-Для v0.9.1 **37 из 37 Frontend-тестов пройдены**; основные функции проверены в браузере.
+Для v0.9.2 **41 из 41 Frontend-тестов пройдены**, также пройдены 9 из 9 Backend-тестов и проверка TypeScript. Браузерная приёмка новой функции фотографий ещё предстоит; ранее пользователь проверил основные функции v0.9.1.
 
 **Известное ограничение:** production-сборка `npm run build` на Windows ранее завершалась ошибкой совместимости `satellite.js` (WASM) и сборщика Vite Worker. В репозитории настроен формат ES-модулей для Workers, но успешная сборка пока не подтверждена. Независимая численная сверка SGP4 также запланирована.
 
@@ -112,4 +116,4 @@ npm run check:cesium
 
 ---
 
-<div align="center"><sub>SatGeoTracker · Земля / Орбиты / Сигналы · v0.9.1</sub></div>
+<div align="center"><sub>SatGeoTracker · Земля / Орбиты / Сигналы · v0.9.2</sub></div>

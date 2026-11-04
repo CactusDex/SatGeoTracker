@@ -3259,3 +3259,58 @@ button {
 @media (hover: none), (pointer: coarse) {
   .sat-hover-card { display: none; }
 }
+
+/* v0.9.2 — Satellite Media: thumbnail in the shared inspector header. */
+.inspector-object-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+.inspector-object-identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.inspector-object-header h1 {
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+.satellite-thumbnail {
+  width: 90px;
+  min-width: 90px;
+  flex: 0 0 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(185, 201, 215, .18);
+  border-radius: 9px;
+  background: rgba(22, 29, 35, .78);
+  color: #a7bac6;
+  text-decoration: none;
+  transition: border-color .18s ease;
+}
+.satellite-thumbnail:hover,
+.satellite-thumbnail:focus-visible {
+  border-color: rgba(231, 185, 96, .62);
+}
+.satellite-thumbnail img {
+  display: block;
+  width: 88px;
+  height: 71px;
+  object-fit: contain;
+}
+.satellite-thumbnail small {
+  display: block;
+  padding: 4px;
+  font-size: 9px;
+  line-height: 1.25;
+  letter-spacing: .03em;
+}
+@media (max-width: 440px) {
+  .inspector-object-header { gap: 8px; }
+  .satellite-thumbnail { width: 72px; min-width: 72px; flex-basis: 72px; }
+  .satellite-thumbnail img { width: 70px; height: 60px; }
+}

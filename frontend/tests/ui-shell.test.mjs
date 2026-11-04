@@ -26,9 +26,9 @@ test("brand mark and favicon paths exist in the bundled project", () => {
     assert.ok(existsSync(resolve(root, "public/brand", name)), `${name} missing`);
   }
   assert.match(html, /rel="icon" type="image\/svg\+xml"/);
-  assert.match(html, /<title>SatGeoTracker v0\.9\.1<\/title>/);
+  assert.match(html, /<title>SatGeoTracker v0\.9\.2<\/title>/);
   assert.match(app, /className="brand-icon"/);
-  assert.match(app, /brand-version">v0\.9\.1/);
+  assert.match(app, /brand-version">v0\.9\.2/);
 });
 
 test("favorite navigation and inspector star remain connected", () => {
